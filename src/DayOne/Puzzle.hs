@@ -23,9 +23,7 @@ findFrequency' seen freq (x:xs) =
   let newFreq = x + freq
   in case Map.lookup newFreq seen of
     Just _  -> Just newFreq
-    Nothing -> do
-      let newSeen = Map.insert newFreq True seen
-      findFrequency' newSeen newFreq xs
+    Nothing -> findFrequency' (Map.insert newFreq True seen) newFreq xs
 
 findFrequency :: [Integer] -> Maybe Answer
 findFrequency = findFrequency' (Map.empty) 0
