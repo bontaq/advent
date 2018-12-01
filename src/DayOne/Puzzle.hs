@@ -1,10 +1,9 @@
 module DayOne.Puzzle (partOne, partTwo) where
 
-import Text.Parser.Char
-import Text.Parser.Combinators
-import Text.Trifecta.Parser
-import Text.Parser.Token
 import qualified Data.Map.Strict as Map
+import           Text.Parser.Combinators (many)
+import           Text.Parser.Token (token, integer)
+import           Text.Trifecta.Parser (Parser, parseFromFile)
 
 numbers :: Parser [Integer]
 numbers = many (token integer)
