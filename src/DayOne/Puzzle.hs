@@ -28,7 +28,7 @@ findFrequency' seen freq (x:xs) =
       findFrequency' newSeen newFreq xs
 
 findFrequency :: [Integer] -> Maybe Answer
-findFrequency list = findFrequency' (Map.empty) 0 list
+findFrequency = findFrequency' (Map.empty) 0
 
 partTwo :: IO ()
 partTwo = do
