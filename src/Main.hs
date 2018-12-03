@@ -8,3 +8,4 @@ main = do
   -- DayOne.partOne
   -- DayOne.partTwo
   DayTwo.partOne
+  DayTwo.partTwo
