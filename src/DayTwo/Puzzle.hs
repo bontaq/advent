@@ -6,25 +6,27 @@ import Text.Parser.Char (anyChar, newline)
 import Data.List
 import Data.Char (ord)
 import Data.Maybe (isJust)
+import Data.Monoid
 
 words' :: Parser [Char]
 words' = manyTill anyChar newline
 
-score :: [[a]] -> (Int, Int)
+score :: [[a]] -> (Sum Integer, Sum Integer)
 score characters =
   let
-    scoreA = length . filter ((== 2) . length) $ characters
-    scoreB = length . filter ((== 3) . length) $ characters
+    getScore len = length . filter ((== len) . length)
+    scoreA = getScore 2 characters
+    scoreB = getScore 3 characters
     scoreA' = if scoreA > 0 then 1 else 0
     scoreB' = if scoreB > 0 then 1 else 0
   in
-    (scoreA', scoreB')
+    (Sum scoreA', Sum scoreB')
 
-sumPairs :: [(Int, Int)] -> (Int, Int)
-sumPairs = foldr (\(a', b') (a, b) -> (a' + a, b' + b)) (0, 0)
+sumPairs :: [(Sum Integer, Sum Integer)] -> (Sum Integer, Sum Integer)
+sumPairs = foldr (<>) mempty
 
-multiplyPair :: (Int, Int) -> Int
-multiplyPair (a, b) = a * b
+multiplyPair :: (Sum Integer, Sum Integer) -> Product Integer
+multiplyPair (Sum a, Sum b) = (Product a) <> (Product b)
 
 partOne = do
   raw <- parseFromFile (many words')  "./src/DayTwo/Data.txt"
