@@ -13,8 +13,9 @@ words' = manyTill anyChar newline
 score :: [[a]] -> (Sum Integer, Sum Integer)
 score characters =
   let
-    scoreA = length . filter ((== 2) . length) $ characters
-    scoreB = length . filter ((== 3) . length) $ characters
+    getScore len = length . filter ((== len) . length)
+    scoreA = getScore 2 characters
+    scoreB = getScore 3 characters
     scoreA' = if scoreA > 0 then 1 else 0
     scoreB' = if scoreB > 0 then 1 else 0
   in
