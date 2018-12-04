@@ -22,3 +22,4 @@ executable advent
                      , parsers
                      , containers
                      , raw-strings-qq
+                     , vector
