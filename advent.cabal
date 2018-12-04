@@ -21,3 +21,4 @@ executable advent
                      , trifecta ==2
                      , parsers
                      , containers
+                     , raw-strings-qq
