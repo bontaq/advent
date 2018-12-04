@@ -5,11 +5,12 @@ import Text.Parser.Combinators (many, eof, manyTill)
 import Text.Parser.Char (anyChar, newline)
 import Data.List
 import Data.Char (ord)
+import Data.Monoid
 
 words' :: Parser [Char]
 words' = manyTill anyChar newline
 
-score :: [[a]] -> (Int, Int)
+score :: [[a]] -> (Sum Integer, Sum Integer)
 score characters =
   let
     scoreA = length . filter ((== 2) . length) $ characters
@@ -17,13 +18,13 @@ score characters =
     scoreA' = if scoreA > 0 then 1 else 0
     scoreB' = if scoreB > 0 then 1 else 0
   in
-    (scoreA', scoreB')
+    (Sum scoreA', Sum scoreB')
 
-sumPairs :: [(Int, Int)] -> (Int, Int)
-sumPairs = foldr (\(a', b') (a, b) -> (a' + a, b' + b)) (0, 0)
+sumPairs :: [(Sum Integer, Sum Integer)] -> (Sum Integer, Sum Integer)
+sumPairs = foldr (<>) mempty
 
-multiplyPair :: (Int, Int) -> Int
-multiplyPair (a, b) = a * b
+multiplyPair :: (Sum Integer, Sum Integer) -> Product Integer
+multiplyPair (Sum a, Sum b) = (Product a) <> (Product b)
 
 partOne = do
   raw <- parseFromFile (many words')  "./src/DayTwo/Data.txt"
@@ -36,4 +37,5 @@ validPair a b = (== 1) . length $ (\\) a b
 
 partTwo = do
   raw <- parseFromFile (many words') "./src/DayTwo/Data.txt"
-  print $ fmap (map (map validPair)) raw
+  print "sup"
+  -- print $ fmap (map (map validPair)) raw
