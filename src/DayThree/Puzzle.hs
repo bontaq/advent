@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module DayThree.Puzzle (partOne) where
+module DayThree.Puzzle  where
 
 import qualified Data.Vector as V
 import           Text.Parser.Char (char, anyChar, newline, string)
@@ -15,6 +15,7 @@ exampleInput = [r|
 #3 @ 64,746: 20x27
 #4 @ 406,769: 25x28
 |]
+
 
 -- x and y start from the top left
 -- width extends right
@@ -43,13 +44,27 @@ row = do
 
 
 type Tapestry = [[Integer]]
--- couldn't work until we found the max'
+
 claimToSet :: Claim -> Tapestry -> [Integer]
 claimToSet (Claim _ x y width height) tap = undefined
 
--- 3,2 5x4
+findMaxX :: [Claim] -> Integer
+findMaxX = maximum . map (\(Claim _ x _ _ height) -> x + height)
 
+findMaxY :: [Claim] -> Integer
+findMaxY = maximum . map (\(Claim _ _ y width _) -> y + width)
+
+both :: (a -> c) -> (a -> d) -> a -> (c, d)
+both g f a = (g a, f a)
+
+-- 3,2 5x4
+handleClaims :: [Claim] -> [[Integer]]
+handleClaims claims = do
+  let (sizeX, sizeY) = both findMaxX findMaxY claims
+  [[sizeX, sizeY]]
+
+partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayThree/Data.txt"
-  -- let's just turn claims into sets /shrug
-  print res
+  print $ fmap handleClaims res
+  pure ()
