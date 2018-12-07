@@ -57,12 +57,6 @@ findMaxY = maximum . map (\(Claim _ _ y width _) -> y + width)
 both :: (a -> c) -> (a -> d) -> a -> (c, d)
 both g f a = (g a, f a)
 
--- 3,2 5x4
-handleClaims :: [Claim] -> [[Integer]]
-handleClaims claims = do
-  let (sizeX, sizeY) = both findMaxX findMaxY claims
-  [[sizeX, sizeY]]
-
 type PositionX = Int
 type SizeX = Int
 type Row = [Integer]
@@ -75,13 +69,17 @@ joinRows a b
   | length a < length b = zipWith (+) (a ++ (repeat 0)) b
   | otherwise           = zipWith (+) a (b ++ (repeat 0))
 
+-- joinColumns = map joinRows?
+
 handleClaims' :: [Claim] -> Integer
-handleClaims' claims = do
+handleClaims' (claim:claims) = do
+  let y = (_y claim)
+      maxY = (_height claim)
   1
+
 
 partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayThree/Data.txt"
   print $ fmap handleClaims' res
-  print $ fmap handleClaims res
   pure ()
