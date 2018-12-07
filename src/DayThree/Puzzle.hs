@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module DayThree.Puzzle  where
+module DayThree.Puzzle where
 
 import qualified Data.Vector as V
 import           Text.Parser.Char (char, anyChar, newline, string)
@@ -63,8 +63,23 @@ handleClaims claims = do
   let (sizeX, sizeY) = both findMaxX findMaxY claims
   [[sizeX, sizeY]]
 
+type PositionX = Int
+type SizeX = Int
+type Row = [Integer]
+
+mkRow :: PositionX -> SizeX -> Row
+mkRow start size = (replicate start 0) ++ (replicate size 1)
+
+joinRows :: Row -> Row -> Row
+joinRows a b = zipWith (+) (a ++ (repeat 0)) b
+
+handleClaims' :: [Claim] -> Integer
+handleClaims' claims = do
+  1
+
 partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayThree/Data.txt"
+  print $ fmap handleClaims' res
   print $ fmap handleClaims res
   pure ()
