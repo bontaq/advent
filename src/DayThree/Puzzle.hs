@@ -71,7 +71,9 @@ mkRow :: PositionX -> SizeX -> Row
 mkRow start size = (replicate start 0) ++ (replicate size 1)
 
 joinRows :: Row -> Row -> Row
-joinRows a b = zipWith (+) (a ++ (repeat 0)) b
+joinRows a b
+  | length a < length b = zipWith (+) (a ++ (repeat 0)) b
+  | otherwise           = zipWith (+) a (b ++ (repeat 0))
 
 handleClaims' :: [Claim] -> Integer
 handleClaims' claims = do
