@@ -7,15 +7,7 @@ import           Text.Parser.Char (char, anyChar, newline, string)
 import           Text.Parser.Combinators (manyTill, many)
 import           Text.Parser.Token (token, integer)
 import           Text.RawString.QQ (r)
-import           Text.Trifecta.Parser (Parser, parseFromFile)
-
-exampleInput = [r|
-#1 @ 861,330: 20x10
-#2 @ 491,428: 28x23
-#3 @ 64,746: 20x27
-#4 @ 406,769: 25x28
-|]
-
+import           Text.Trifecta.Parser (Parser, parseFromFile, parseString)
 
 -- x and y start from the top left
 -- width extends right
@@ -69,17 +61,32 @@ joinRows a b
   | length a < length b = zipWith (+) (a ++ (repeat 0)) b
   | otherwise           = zipWith (+) a (b ++ (repeat 0))
 
--- joinColumns = map joinRows?
+handleClaims' :: [Claim] -> [Row] -> [Row]
+handleClaims' [] oldRows = oldRows
+handleClaims' (claim:claims) oldRows =
+  let y            = (_y claim)
+      height       = (_height claim)
+      initialField = replicate (fromIntegral y) []
+      field        = replicate (fromIntegral height) (mkRow (fromIntegral $ _x claim) (fromIntegral $ _width claim))
+      newField     = zipWith joinRows (initialField ++ field) (oldRows ++ (replicate (fromIntegral (y + height)) []))
+  in
+    handleClaims' claims newField
 
-handleClaims' :: [Claim] -> Integer
-handleClaims' (claim:claims) = do
-  let y = (_y claim)
-      maxY = (_height claim)
-  1
+handleClaims claims = handleClaims' claims []
+
+exampleInput = [r|#1 @ 1,3: 4x4
+#2 @ 3,1: 4x4
+#3 @ 5,5: 2x2
+|]
 
 
 partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayThree/Data.txt"
-  print $ fmap handleClaims' res
+  let field = fmap handleClaims res
+      intersected = fmap (filter (> 1) . concat) field
+
+  print $ fmap (length . head) field
+  print $ fmap length field
+  print $ fmap length intersected
   pure ()
