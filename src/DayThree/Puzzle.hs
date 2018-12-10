@@ -68,17 +68,16 @@ handleClaims' (claim:claims) oldRows =
       height       = (_height claim)
       initialField = replicate (fromIntegral y) []
       field        = replicate (fromIntegral height) (mkRow (fromIntegral $ _x claim) (fromIntegral $ _width claim))
-      newField     = zipWith joinRows (initialField ++ field) (oldRows ++ (replicate (fromIntegral (y + height)) []))
+      newField     = zipWith joinRows (initialField ++ field ++ (replicate 1000 [])) oldRows
   in
     handleClaims' claims newField
 
-handleClaims claims = handleClaims' claims []
+handleClaims claims = handleClaims' claims (replicate 1000 [])
 
 exampleInput = [r|#1 @ 1,3: 4x4
 #2 @ 3,1: 4x4
 #3 @ 5,5: 2x2
 |]
-
 
 partOne :: IO ()
 partOne = do
