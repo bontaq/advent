@@ -3,6 +3,7 @@
 module DayThree.Puzzle where
 
 import qualified Data.Vector as V
+import Data.List (intersect)
 import           Text.Parser.Char (char, anyChar, newline, string)
 import           Text.Parser.Combinators (manyTill, many)
 import           Text.Parser.Token (token, integer)
@@ -67,7 +68,9 @@ handleClaims' (claim:claims) oldRows =
   let y            = (_y claim)
       height       = (_height claim)
       initialField = replicate (fromIntegral y) []
-      field        = replicate (fromIntegral height) (mkRow (fromIntegral $ _x claim) (fromIntegral $ _width claim))
+      field        = replicate (fromIntegral height) (mkRow
+                                                      (fromIntegral $ _x claim)
+                                                      (fromIntegral $ _width claim))
       newField     = zipWith joinRows (initialField ++ field ++ (replicate 1000 [])) oldRows
   in
     handleClaims' claims newField
@@ -88,4 +91,42 @@ partOne = do
   print $ fmap (length . head) field
   print $ fmap length field
   print $ fmap length intersected
+  pure ()
+
+removeId :: Integer -> [Claim] -> [Claim]
+removeId target = filter (\claim -> (_id claim) /= target)
+
+intersected :: Claim -> Claim -> Bool
+intersected (Claim _ x y width height) (Claim _ x' y' width' height') =
+  let intersectX = (> 0) . length $ intersect [x..(x + width - 1)] [x'..(x' + width' - 1)]
+      intersectY = (> 0) . length $ intersect [y..(y + height - 1)] [y'..(y' + height' - 1)]
+  in
+    intersectX && intersectY
+
+checkForTrue :: Claim -> [Bool] -> (Claim, Bool)
+checkForTrue claim claims = (,) claim $ foldr (\b acc -> acc || b) False claims
+
+handleOptions' :: [Integer] -> [Claim] -> [Claim] -> [(Claim, Bool)]
+handleOptions' ids claims goodClaims =
+  let all =
+        map (\claim -> checkForTrue claim $
+                       map
+                           (\claim' ->
+                             if (_id claim') /= (_id claim)
+                             then intersected claim claim'
+                             else False)
+                           claims)
+        claims
+  in
+    filter (\(a, b) -> b == False) all
+
+handleOptions :: Maybe [Integer] -> Maybe [Claim] -> IO ()
+handleOptions (Just ids) (Just claims) =
+  print $ handleOptions' ids claims []
+
+partTwo :: IO ()
+partTwo = do
+  res <- parseFromFile (many row) "./src/DayThree/Data.txt"
+  let possibilities = fmap (map _id) res
+  handleOptions possibilities res
   pure ()

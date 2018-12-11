@@ -10,4 +10,5 @@ main = do
   -- DayOne.partTwo
   -- DayTwo.partOne
   -- DayTwo.partTwo
-  DayThree.partOne
+  -- DayThree.partOne
+  DayThree.partTwo
