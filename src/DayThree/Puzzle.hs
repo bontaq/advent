@@ -9,6 +9,8 @@ import           Text.Parser.Combinators (manyTill, many)
 import           Text.Parser.Token (token, integer)
 import           Text.RawString.QQ (r)
 import           Text.Trifecta.Parser (Parser, parseFromFile, parseString)
+import Control.Applicative (liftA3)
+import Control.Monad.IO.Class
 
 -- x and y start from the top left
 -- width extends right
@@ -106,8 +108,8 @@ intersected (Claim _ x y width height) (Claim _ x' y' width' height') =
 checkForTrue :: Claim -> [Bool] -> (Claim, Bool)
 checkForTrue claim claims = (,) claim $ foldr (\b acc -> acc || b) False claims
 
-handleOptions' :: [Integer] -> [Claim] -> [Claim] -> [(Claim, Bool)]
-handleOptions' ids claims goodClaims =
+handleOptions :: [Integer] -> [Claim] -> [Claim] -> [(Claim, Bool)]
+handleOptions ids claims goodClaims =
   let all =
         map (\claim -> checkForTrue claim $
                        map
@@ -120,13 +122,9 @@ handleOptions' ids claims goodClaims =
   in
     filter (\(a, b) -> b == False) all
 
-handleOptions :: Maybe [Integer] -> Maybe [Claim] -> IO ()
-handleOptions (Just ids) (Just claims) =
-  print $ handleOptions' ids claims []
-
 partTwo :: IO ()
 partTwo = do
   res <- parseFromFile (many row) "./src/DayThree/Data.txt"
   let possibilities = fmap (map _id) res
-  handleOptions possibilities res
+  print $ liftA3 handleOptions possibilities res (Just [])
   pure ()
