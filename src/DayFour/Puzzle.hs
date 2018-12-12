@@ -15,12 +15,19 @@ example = [r|
 [1518-11-02 23:56] Guard #3463 begins shift
 |]
 
-row :: Parser String
+data Date = Date Integer Integer Integer
+
+row :: Parser Integer
 row = do
   optional newline
-  time <- between '[' ']' (many anyChar)
-  skipMany newline
-  pure time
+  char '['
+  year <- integer
+  char '-'
+  month <- integer
+  char '-'
+  day <- integer
+  optional (manyTill anyChar newline)
+  pure year
 
 partOne = do
   print $ parseString (many row) mempty example
