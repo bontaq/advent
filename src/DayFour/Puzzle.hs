@@ -26,8 +26,11 @@ row = do
   month <- integer
   char '-'
   day <- integer
+  guardId <- try $ do
+    string " Guard #"
+    integer
   optional (manyTill anyChar newline)
-  pure year
+  pure guardId
 
 partOne = do
   print $ parseString (many row) mempty example
