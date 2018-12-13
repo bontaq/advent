@@ -121,9 +121,10 @@ sleepRanges lastSleep (r:rs) =
 totalSleep :: [(Id, Row)] -> Int
 totalSleep = length . (sleepRanges 0)
 
-favoriteSleep :: [(Id, Row)] -> [[Integer]]
+favoriteSleep :: [(Id, Row)] -> Integer
 favoriteSleep rows =
-  sortBy (\a b -> compare (length a) (length b))
+  head . last
+  $ sortBy (\a b -> compare (length a) (length b))
   $ group . sort
   $ sleepRanges 0 rows
 
@@ -132,20 +133,15 @@ partOne = do
   res <- parseFromFile (many row) "./src/DayFour/Data.txt"
   let ordered = fmap sort res
       labeled = fmap (labelRows 0) ordered
-      grouped = fmap (groupBy (\a b -> fst a == fst b))  labeled
+      -- this shit broken yo
+      -- oh duh, gotta sort them first?
+      sorted = fmap (sortBy (\a b -> compare (fst a) (fst b))) labeled
+      grouped = fmap (groupBy (\a b -> fst a == fst b)) sorted
 
       totalSleeps = fmap (map (\(rows) -> (totalSleep rows, rows))) grouped
       sleepiest = fmap
         (head . sortBy (\a b -> compare (fst b) (fst a))) totalSleeps
       favorite = fmap (\(_, rows) -> favoriteSleep rows) sleepiest
 
-  -- print totalSleeps
   print sleepiest
   print favorite
-  -- mapM (print . mappend "\n" . show) grouped
-  -- totalSleeps >>= pure . printRows
-  -- pure $ printRows totalSleeps
-  -- print test
-  -- fmap print grouped
-  -- print $ parseString (many row) mempty example
-  print "sup"
