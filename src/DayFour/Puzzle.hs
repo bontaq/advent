@@ -99,9 +99,53 @@ row = do
 
   pure $ Row (DateTime date time) action
 
+labelRows :: Integer -> [Row] -> [(Id, Row)]
+labelRows _ [] = []
+labelRows activeGuard (r:rs) =
+  let (Row date action) = r
+  in case action of
+    (Guard id) -> (id, r) : (labelRows id rs)
+    _          -> (activeGuard, r) : (labelRows activeGuard rs)
+
+sleepRanges :: Integer -> [(Id, Row)] -> [Integer]
+sleepRanges lastSleep [] = []
+sleepRanges lastSleep (r:rs) =
+  let (_, (Row date action)) = r
+      (DateTime _ t) = date
+      (Time _ m) = t
+  in case action of
+    Sleep -> sleepRanges m rs
+    WakeUp -> [lastSleep..(m - 1)] ++ sleepRanges 0 rs
+    _ -> sleepRanges 0 rs
+
+totalSleep :: [(Id, Row)] -> Int
+totalSleep = length . (sleepRanges 0)
+
+favoriteSleep :: [(Id, Row)] -> [[Integer]]
+favoriteSleep rows =
+  sortBy (\a b -> compare (length a) (length b))
+  $ group . sort
+  $ sleepRanges 0 rows
+
 partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayFour/Data.txt"
-  print $ fmap sort res
+  let ordered = fmap sort res
+      labeled = fmap (labelRows 0) ordered
+      grouped = fmap (groupBy (\a b -> fst a == fst b))  labeled
+
+      totalSleeps = fmap (map (\(rows) -> (totalSleep rows, rows))) grouped
+      sleepiest = fmap
+        (head . sortBy (\a b -> compare (fst b) (fst a))) totalSleeps
+      favorite = fmap (\(_, rows) -> favoriteSleep rows) sleepiest
+
+  -- print totalSleeps
+  print sleepiest
+  print favorite
+  -- mapM (print . mappend "\n" . show) grouped
+  -- totalSleeps >>= pure . printRows
+  -- pure $ printRows totalSleeps
+  -- print test
+  -- fmap print grouped
   -- print $ parseString (many row) mempty example
   print "sup"
