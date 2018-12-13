@@ -128,6 +128,10 @@ favoriteSleep rows =
   $ group . sort
   $ sleepRanges 0 rows
 
+--
+-- Find the guard that has the most minutes asleep.
+-- What minute does that guard spend asleep the most?
+--
 partOne :: IO ()
 partOne = do
   res <- parseFromFile (many row) "./src/DayFour/Data.txt"
@@ -145,3 +149,37 @@ partOne = do
 
   print sleepiest
   print favorite
+
+minuteMostSlept :: [(Id, Row)] -> (Id, [(Integer, Int)])
+minuteMostSlept rows =
+  let ranges = sleepRanges 0 rows
+      id = fst $ head rows
+  in
+    (,) id
+    $ sortBy (\(_, a) (_, b) -> compare b a)
+    $ foldr (\r acc -> (head r, length r) : acc) [] $ group . sort $ ranges
+
+simplify :: (Id, [(Integer, Int)]) -> (Id, Maybe (Integer, Int))
+simplify (id, []) = (id, Nothing)
+simplify (id, (t:ts)) = (id, Just t)
+
+--
+-- Of all guards, which guard is most frequently asleep on the same minute?
+-- What is the ID of the guard you chose multiplied by the minute you chose?
+--
+partTwo :: IO ()
+partTwo = do
+  res <- parseFromFile (many row) "./src/DayFour/Data.txt"
+  let ordered = fmap sort res
+      labeled = fmap (labelRows 0) ordered
+      sorted = fmap (sortBy (\a b -> compare (fst a) (fst b))) labeled
+      grouped = fmap (groupBy (\a b -> fst a == fst b)) sorted
+
+      withMostSlept = fmap (map minuteMostSlept) grouped
+      simplified = fmap
+        (map simplify) withMostSlept
+
+  case simplified of
+    Just rows -> mapM_ print rows
+
+  print "sup"
