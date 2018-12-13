@@ -6,8 +6,9 @@ import           Text.RawString.QQ (r)
 import Text.Parser.Combinators
 import Text.Parser.Char
 import           Text.Parser.Token
-import Text.Trifecta.Parser (Parser, parseString)
+import Text.Trifecta.Parser (Parser, parseString, parseFromFile)
 import Control.Applicative
+import Data.List
 
 example = [r|
 [1518-03-11 00:45] wakes up
@@ -18,14 +19,36 @@ example = [r|
 type Id = Integer
 
 data Date = Date Integer Integer Integer
-          deriving Show
+          deriving (Show, Eq)
 data Time = Time Integer Integer
-          deriving Show
+          deriving (Show, Eq)
 data DateTime = DateTime Date Time
-              deriving Show
+              deriving (Show, Eq)
+
+instance Ord Date where
+  compare first@(Date a b c) second@(Date a' b' c') =
+    case compare a a' of
+      EQ -> case compare b b' of
+        EQ -> compare c c'
+        _ -> compare b b'
+      _ -> compare a a'
+
+instance Ord Time where
+  compare first@(Time a b) second@(Time a' b') =
+    case compare a a' of
+      EQ -> compare b b'
+      _ -> compare a a'
+
+instance Ord DateTime where
+  compare (DateTime d t) (DateTime d' t')
+    | d == d' = compare t t'
+    | otherwise = compare d d'
+
+instance Ord Row where
+  compare (Row dt _) (Row dt' _) = compare dt dt'
 
 data Action = Sleep | WakeUp | Guard Id
-             deriving Show
+             deriving (Show, Eq)
 
 guard :: Parser Action
 guard = do
@@ -43,7 +66,7 @@ sleep = do
   pure Sleep
 
 data Row = Row DateTime Action
-         deriving Show
+         deriving (Show, Eq)
 
 dateParse :: Parser Date
 dateParse = do
@@ -76,6 +99,9 @@ row = do
 
   pure $ Row (DateTime date time) action
 
+partOne :: IO ()
 partOne = do
-  print $ parseString (many row) mempty example
+  res <- parseFromFile (many row) "./src/DayFour/Data.txt"
+  print $ fmap sort res
+  -- print $ parseString (many row) mempty example
   print "sup"
