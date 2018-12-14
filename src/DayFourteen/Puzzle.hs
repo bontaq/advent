@@ -14,12 +14,6 @@ data Elf = Elf CurrentPosition
 toDigit :: Char -> Int
 toDigit = (\x -> read (x : "") :: Int)
 
-toDigits :: [Char] -> [Int]
-toDigits = map toDigit
-
-toString :: [Int] -> [Char]
-toString = foldr ((++) . show) ""
-
 -- 1) pick scores from positions
 -- 2) sum
 -- 3) append sum to puzzleInput
@@ -59,9 +53,8 @@ partOne = do
     newBoard = board ++ (show score)
     newPosition = moveElfs initialElves newBoard
   print $ initialElves
-  -- print $ getScore initialElves "37"
   print $ newBoard
   print newPosition
-  print $ take 10 $ drop 793061 $ loop 1000000 initialElves board
-  -- print $ loop 11 initialElves board
-  -- print $ loop 19 initialElves board
+
+  -- lmao takes until the end of the universe
+  print $ take 10 $ drop 2018 $ loop 1000 initialElves board
