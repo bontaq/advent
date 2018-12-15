@@ -2,9 +2,13 @@
 
 module DayFifteen.Puzzle where
 
+import Prelude hiding (length, filter, zipWith, zip, head)
+import qualified Prelude as P
 import Text.RawString.QQ (r)
 import Control.Applicative
 import Data.List (groupBy)
+import Data.Sequence
+import Data.Foldable (toList)
 
 -- Initially:
 -- #######
@@ -40,7 +44,7 @@ instance Show Tile where
   show Goblin = "G"
   show Open   = "."
 
-type Board = [[Tile]]
+type Board = Seq (Seq Tile)
 
 -- turn order determined by reading order
 -- turns:
@@ -75,25 +79,28 @@ mkTile 'G' = Goblin
 mkTile 'E' = Elf
 mkTile '#' = Wall
 
-mkBoard :: [Char] -> Board
-mkBoard =
-  (map . map $ mkTile) . (filter ((> 0) . length)) . lines
+mkBoard :: String -> Board
+mkBoard s =
+  let arr = (map . map $ mkTile) . (P.filter ((> 0) . P.length)) . lines
+  in fromList $ map fromList $ arr s
 
 showBoard :: Board -> IO ()
-showBoard = mapM_ (print . (filter (/= ',')) . show)
+showBoard b = mapM_ (print . (P.filter (/= ',')) . show) $ toList b
 
 groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
 groupByX = groupBy (\(x, _) (x', _) -> x == x')
 
-withCoordinates :: Board -> [[(Tile, (Int, Int))]]
+-- withCoordinates :: Board -> [[(Tile, (Int, Int))]]
 withCoordinates board =
   let x = length board
-      y = length (head board)
-      coords = groupByX $ liftA2 (,) [0..x] [0..y]
-  in zipWith zip board coords
+      y = length (index board 0)
+      coords = groupByX $ liftA2 (,) ([0..x]) ([0..y])
+      coords' = fromList $ fmap fromList coords
+  in zipWith zip board coords'
 
 characterLocations board =
-  undefined
+  let board' = withCoordinates board
+  in undefined
 
 partOne = do
   res <- readFile "src/DayFifteen/Data.txt"
