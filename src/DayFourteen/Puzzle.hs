@@ -2,10 +2,12 @@
 
 module DayFourteen.Puzzle where
 
+import qualified Data.Vector as V
+
 puzzleInput :: [Char]
 puzzleInput = "793061"
 
-type Board = [Char]
+type Board = V.Vector Char
 type CurrentPosition = Int
 
 data Elf = Elf CurrentPosition
@@ -22,21 +24,22 @@ toDigit = (\x -> read (x : "") :: Int)
 getScore :: [Elf] -> Board -> Int
 getScore [] _ = 0
 getScore ((Elf pos):elfs) board =
-  let score = toDigit $ board !! pos
+  let score = toDigit $ board V.! pos
   in score + (getScore elfs board)
 
 moveElfs :: [Elf] -> Board -> [Elf]
 moveElfs [] _ = []
 moveElfs ((Elf pos):elfs) board =
-  let toMove      = (+1) $ toDigit $ board !! pos
-      newPosition = (pos + toMove) `mod` (length board)
+  let
+    toMove      = (+1) $ toDigit $ board V.! pos
+    newPosition = (pos + toMove) `mod` (length board)
   in Elf newPosition : moveElfs elfs board
 
 loop :: Int -> [Elf] -> Board -> Board
 loop 0 elfs board     = board
 loop times elfs board =
   let !score = getScore elfs board
-      !newBoard = board ++ (show score)
+      !newBoard = foldr (\x a -> V.snoc a x) board (show score)
       !newPosition = moveElfs elfs newBoard
   in loop (times - 1) newPosition newBoard
 
@@ -47,14 +50,17 @@ loop times elfs board =
 partOne = do
   print $ length . show $ puzzleInput
   let
-    board = "37"
+    board = V.fromList ['3', '7'] :: Board
     initialElves = map Elf [0..(length board - 1)]
-    score = getScore initialElves board
-    newBoard = board ++ (show score)
-    newPosition = moveElfs initialElves newBoard
+    ans = loop 10 initialElves board
+--    score = getScore initialElves board
+--    newBoard = board ++ (show score)
+--    newPosition = moveElfs initialElves newBoard
   print $ initialElves
-  print $ newBoard
-  print newPosition
+--  print $ newBoard
+--  print newPosition
 
   -- lmao takes until the end of the universe
-  print $ take 10 $ drop 2018 $ loop 1000 initialElves board
+
+  print $ V.take 10 $ V.drop 793061 $ loop 1000000 initialElves board
+  pure ()
