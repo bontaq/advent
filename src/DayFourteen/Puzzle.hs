@@ -1,7 +1,7 @@
 module DayFourteen.Puzzle where
 
 import qualified Data.Vector.Unboxed as U
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, isPrefixOf, tails)
 import Data.Sequence
 import qualified Data.Sequence as Seq
 
@@ -86,6 +86,9 @@ loop' elfs board =
       newPosition = moveElfs elfs newBoard
   in (show score) ++ loop' newPosition newBoard
 
+locate :: Eq a => [a] -> [a] -> Int
+locate xs = Prelude.length . takeWhile (not . (xs `isPrefixOf`)) . Data.List.tails
+
 --
 -- How many recipes appear on the scoreboard to
 -- the left of the score sequence in your puzzle input?
@@ -95,3 +98,4 @@ partTwo = do
     board = fromList ['3', '7'] :: Board
     initialElves = map Elf [0..(Seq.length board - 1)]
   print $ Prelude.take 10 $ Prelude.drop 793061 $ '3' : '7' : loop' initialElves board
+  print $ locate (target) ('3' : '7' : loop' initialElves board)
