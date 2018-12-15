@@ -90,11 +90,13 @@ loop' times elfs board =
       newPosition = moveElfs elfs newBoard
 
       -- hopefully more efficient?
-      slicesPositions = map (\(Elf p) -> max 0 (p - 7)) elfs
+      slicesPositions = map (\(Elf p) -> max 0 (p - 8)) elfs
+
       slices =
         map (\p ->
               U.slice p
-              (U.length newBoard - p)
+              (min (U.length newBoard - p) (p + 8))
+              -- (U.length newBoard - p)
               newBoard)
         slicesPositions
       valid = not $ any (\s -> isInfixOf target (U.toList s)) slices
@@ -112,4 +114,3 @@ partTwo = do
     board = U.fromList ['3', '7'] :: Board
     initialElves = map Elf [0..(U.length board - 1)]
   print $ loop' True initialElves board
-  print ""
