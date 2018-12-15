@@ -9,6 +9,8 @@ import Control.Applicative
 import Data.List (groupBy)
 import Data.Sequence
 import Data.Foldable (toList)
+-- import Control.Lens
+
 
 -- Initially:
 -- #######
@@ -98,11 +100,15 @@ withCoordinates board =
       coords' = fromList $ fmap fromList coords
   in zipWith zip board coords'
 
-characterLocations :: Board -> a
+isCharacter :: Tile -> Bool
+isCharacter Goblin = True
+isCharacter Elf    = True
+isCharacter _      = False
+
+characterLocations :: Board -> Seq (Tile, (Int, Int))
 characterLocations board =
   let board' = withCoordinates board
-
-  in undefined
+  in filter (isCharacter . fst) (foldr (><) mempty board')
 
 partOne = do
   res <- readFile "src/DayFifteen/Data.txt"
