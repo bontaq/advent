@@ -1,14 +1,14 @@
-{-# LANGUAGE BangPatterns #-}
-
 module DayFourteen.Puzzle where
 
 import qualified Data.Vector.Unboxed as U
 import Data.List (isInfixOf)
+import Data.Sequence
+import qualified Data.Sequence as Seq
 
 puzzleInput :: [Char]
 puzzleInput = "793061"
 
-type Board = U.Vector Char
+type Board = Seq Char
 type CurrentPosition = Int
 
 data Elf = Elf CurrentPosition
@@ -25,15 +25,15 @@ toDigit = (\x -> read (x : "") :: Int)
 getScore :: [Elf] -> Board -> Int
 getScore [] _ = 0
 getScore ((Elf pos):elfs) board =
-  let score = toDigit $ board U.! pos
+  let score = toDigit $ index board pos
   in score + (getScore elfs board)
 
 moveElfs :: [Elf] -> Board -> [Elf]
 moveElfs [] _ = []
 moveElfs ((Elf pos):elfs) board =
   let
-    toMove      = (+1) $ toDigit $ board U.! pos
-    newPosition = (pos + toMove) `mod` (U.length board)
+    toMove      = (+1) $ toDigit $ index board pos
+    newPosition = (pos + toMove) `mod` (Seq.length board)
   in Elf newPosition : moveElfs elfs board
 
 -- test :: U.Vector Char -> (U.Vector Char, U.Vector Char)
@@ -43,12 +43,13 @@ loop :: Int -> [Elf] -> Board -> Board
 loop 0 elfs board     = board
 loop times elfs board =
   let score = getScore elfs board
-      newBoard =
-        foldr (\x a -> U.snoc a x)
-        board
-        -- no idea why I have to reverse this hm
-        -- works normally w/o when using non-unboxed vector
-        (reverse $ show score)
+      newBoard = board <> (fromList $ show score)
+      -- newBoard =
+      --   foldr (\x a -> U.snoc a x)
+      --   board
+      --   -- no idea why I have to reverse this hm
+      --   -- works normally w/o when using non-unboxed vector
+      --   (reverse $ show score)
       newPosition = moveElfs elfs newBoard
   in loop (times - 1) newPosition newBoard
 
@@ -57,53 +58,33 @@ loop times elfs board =
 -- after the number of recipes in your puzzle input?
 --
 partOne = do
-  print $ length . show $ puzzleInput
+  -- print $ length . show $ puzzleInput
   let
-    board = U.fromList ['3', '7'] :: Board
-    initialElves = map Elf [0..(U.length board - 1)]
+    board = fromList ['3', '7'] :: Board
+    initialElves = map Elf [0..(Seq.length board - 1)]
     ans = loop 10 initialElves board
     score = getScore initialElves board
-    newBoard = foldr (\a b -> U.snoc b a) board (show score)
-    newPosition = moveElfs initialElves newBoard
+    -- newBoard = foldr (\a b -> U.snoc b a) board (show score)
+    -- newPosition = moveElfs initialElves newBoard
 --  print $ initialElves
 --  print $ newBoard
 --  print newPosition
 
   -- lmao takes until the end of the universe
 
-  print $ U.take 10 $ U.drop 793061 $ loop 800000 initialElves board
+  print $ Seq.take 10 $ Seq.drop 793061 $ loop 800000 initialElves board
   pure ()
 
 target :: [Char]
 target = "793061"
 
-loop' :: Bool -> [Elf] -> Board -> Board
-loop' False elfs board = board
-loop' times elfs board =
+loop' :: [Elf] -> Board -> [Char]
+loop' elfs board =
   let score = getScore elfs board
-      newBoard =
-        foldr (\x a -> U.snoc a x)
-        board
-        -- no idea why I have to reverse this hm
-        -- works normally w/o when using non-unboxed vector
-        (reverse $ show score)
+      newDigits = fromList $ show score
+      newBoard = board <> (newDigits)
       newPosition = moveElfs elfs newBoard
-
-      -- hopefully more efficient?
-      slicesPositions = map (\(Elf p) -> max 0 (p - 8)) elfs
-
-      slices =
-        map (\p ->
-              U.slice p
-              (min (U.length newBoard - p) (p + 8))
-              -- (U.length newBoard - p)
-              newBoard)
-        slicesPositions
-      valid = not $ any (\s -> isInfixOf target (U.toList s)) slices
-
-      continue = valid
-
-  in loop' continue newPosition newBoard
+  in (show score) ++ loop' newPosition newBoard
 
 --
 -- How many recipes appear on the scoreboard to
@@ -111,6 +92,6 @@ loop' times elfs board =
 --
 partTwo = do
   let
-    board = U.fromList ['3', '7'] :: Board
-    initialElves = map Elf [0..(U.length board - 1)]
-  print $ loop' True initialElves board
+    board = fromList ['3', '7'] :: Board
+    initialElves = map Elf [0..(Seq.length board - 1)]
+  print $ Prelude.take 10 $ Prelude.drop 793061 $ '3' : '7' : loop' initialElves board
