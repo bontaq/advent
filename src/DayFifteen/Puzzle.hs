@@ -2,7 +2,9 @@
 
 module DayFifteen.Puzzle where
 
-import           Text.RawString.QQ (r)
+import Text.RawString.QQ (r)
+import Control.Applicative
+import Data.List (groupBy)
 
 -- Initially:
 -- #######
@@ -73,13 +75,25 @@ mkTile 'G' = Goblin
 mkTile 'E' = Elf
 mkTile '#' = Wall
 
-
--- mkBoard :: [Char] -> Board
+mkBoard :: [Char] -> Board
 mkBoard =
   (map . map $ mkTile) . (filter ((> 0) . length)) . lines
 
 showBoard :: Board -> IO ()
 showBoard = mapM_ (print . (filter (/= ',')) . show)
+
+groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
+groupByX = groupBy (\(x, _) (x', _) -> x == x')
+
+withCoordinates :: Board -> [[(Tile, (Int, Int))]]
+withCoordinates board =
+  let x = length board
+      y = length (head board)
+      coords = groupByX $ liftA2 (,) [0..x] [0..y]
+  in zipWith zip board coords
+
+characterLocations board =
+  undefined
 
 partOne = do
   res <- readFile "src/DayFifteen/Data.txt"
