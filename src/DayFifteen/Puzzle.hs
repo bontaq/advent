@@ -90,7 +90,7 @@ showBoard b = mapM_ (print . (P.filter (/= ',')) . show) $ toList b
 groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
 groupByX = groupBy (\(x, _) (x', _) -> x == x')
 
--- withCoordinates :: Board -> [[(Tile, (Int, Int))]]
+withCoordinates :: Board -> Seq (Seq (Tile, (Int, Int)))
 withCoordinates board =
   let x = length board
       y = length (index board 0)
@@ -98,8 +98,10 @@ withCoordinates board =
       coords' = fromList $ fmap fromList coords
   in zipWith zip board coords'
 
+characterLocations :: Board -> a
 characterLocations board =
   let board' = withCoordinates board
+
   in undefined
 
 partOne = do
