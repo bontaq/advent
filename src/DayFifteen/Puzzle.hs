@@ -134,19 +134,29 @@ getSurrounding x y board =
     spots = map (\y -> map (\x -> (readSpot x y board, (x, y))) xRange) yRange
   in concat spots
 
-openMoves :: (a, (Int, Int)) -> Board -> [(Int, Int)]
+openMoves :: (a, (X, Y)) -> Board -> [(X, Y)]
 openMoves (_, (x, y)) board =
   let rawSurrounding = getSurrounding x y board
       surrounding = foldr ((++) . removeMaybe) [] rawSurrounding
       open = P.filter (\(t, _) -> isOpen t) surrounding
   in map (\(_, coords) -> coords) open
 
+type X = Int
+type Y = Int
+type EnemyPositions = [(X, Y)]
+type Start = (X, Y)
+type End = (X, Y)
+
+cost :: Start -> Board -> End
+cost = undefined
+
 runTurn :: (Tile, (Int, Int)) -> Board -> a
 runTurn character board =
   let locs = characterLocations board
       (meKind, _) = character
       enemies = filter (\(kind, _) -> kind == enemy meKind) locs
-      enemiesOpen' = fmap (flip openMoves board) enemies
+-- enemiesOpen' :: [(X, Y)]
+      enemiesOpen' = concat . toList $ fmap (flip openMoves board) enemies
   in undefined
 
 -- all actions are completed and written back to the board
