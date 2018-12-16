@@ -9,6 +9,7 @@ import Control.Applicative
 import Data.List (groupBy)
 import Data.Sequence
 import Data.Foldable (toList)
+import Data.Maybe (catMaybes)
 -- import Control.Lens
 
 
@@ -106,6 +107,10 @@ isCharacter Goblin = True
 isCharacter Elf    = True
 isCharacter _      = False
 
+isOpen :: Tile -> Bool
+isOpen Open  = True
+isOpen _     = False
+
 characterLocations :: Board -> Seq (Tile, (Int, Int))
 characterLocations board =
   let board' = withCoordinates board
@@ -121,16 +126,20 @@ readSpot x y board =
     Nothing   -> Nothing
     Just yRow -> yRow !? x
 
-getSurrounding :: Int -> Int -> Board -> [[Maybe Tile]]
+getSurrounding :: Int -> Int -> Board -> [(Maybe Tile, (Int, Int))]
 getSurrounding x y board =
   let
     xRange = [x-1..x+1]
     yRange = [y-1..y+1]
-    spots = map (\y -> map (\x -> readSpot x y board) xRange) yRange
-  in spots
+    spots = map (\y -> map (\x -> (readSpot x y board, (x, y))) xRange) yRange
+  in concat spots
 
-openMoves :: (Tile, (Int, Int)) -> Board -> (Int, Int)
-openMoves (_, (x, y)) = undefined
+openMoves :: (a, (Int, Int)) -> Board -> [(Int, Int)]
+openMoves (_, (x, y)) board =
+  let rawSurrounding = getSurrounding x y board
+      surrounding = foldr ((++) . removeMaybe) [] rawSurrounding
+      open = P.filter (\(t, _) -> isOpen t) surrounding
+  in map (\(_, coords) -> coords) open
 
 runTurn :: (Tile, (Int, Int)) -> Board -> a
 runTurn character board =
@@ -155,3 +164,8 @@ partOne = do
 -- a & ix 0 .~ "what"
 -- view the first index of a set
 -- a ^. ix 0
+
+-- util
+removeMaybe :: (Maybe a, b) -> [(a, b)]
+removeMaybe (Just a, b)  = [(a, b)]
+removeMaybe (Nothing, _) = []
