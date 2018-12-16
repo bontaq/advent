@@ -40,13 +40,14 @@ import Data.Maybe (catMaybes)
 -- #.....#
 -- #######
 
-data Tile = Wall | Elf | Goblin | Open
+data Tile = Wall | Elf | Goblin | Open | Cost Int
           deriving Eq
 instance Show Tile where
-  show Wall   = "#"
-  show Elf    = "E"
-  show Goblin = "G"
-  show Open   = "."
+  show Wall     = "#"
+  show Elf      = "E"
+  show Goblin   = "G"
+  show Open     = "."
+  show (Cost a) = show a
 
 type Board = Seq (Seq Tile)
 
@@ -134,8 +135,8 @@ getSurrounding x y board =
     spots = map (\y -> map (\x -> (readSpot x y board, (x, y))) xRange) yRange
   in concat spots
 
-openMoves :: (a, (X, Y)) -> Board -> [(X, Y)]
-openMoves (_, (x, y)) board =
+openMoves :: (X, Y) -> Board -> [(X, Y)]
+openMoves (x, y) board =
   let rawSurrounding = getSurrounding x y board
       surrounding = foldr ((++) . removeMaybe) [] rawSurrounding
       open = P.filter (\(t, _) -> isOpen t) surrounding
@@ -147,16 +148,39 @@ type EnemyPositions = [(X, Y)]
 type Start = (X, Y)
 type End = (X, Y)
 
-cost :: Start -> Board -> End
-cost = undefined
+writeBoard :: Tile -> (X, Y) -> Board -> Board
+writeBoard t (x, y) b =
+  let oldRow = index b y
+      newRow = update x t oldRow
+  in update y newRow b
+
+-- round -> last round -> board -> board
+cost' :: Int -> [(X, Y)] -> Board -> Board
+cost' _ []            board = board  -- no more open
+cost' round lastMoves board =
+  let
+    newRound = round + 1
+    newMoves = foldr ((++) . (flip openMoves board)) [] lastMoves
+    newBoard = foldr (\(x, y) b -> undefined) board newMoves
+  in undefined
+
+-- fill board with costs from loc
+costBoard :: (X, Y) -> Board -> Board
+costBoard coord board =
+  let node = coord
+  in (\x acc -> undefined) board node
+
+-- start from the target and walk out
+move :: Start -> EnemyPositions -> Board -> End
+move = undefined
 
 runTurn :: (Tile, (Int, Int)) -> Board -> a
 runTurn character board =
   let locs = characterLocations board
       (meKind, _) = character
       enemies = filter (\(kind, _) -> kind == enemy meKind) locs
--- enemiesOpen' :: [(X, Y)]
-      enemiesOpen' = concat . toList $ fmap (flip openMoves board) enemies
+      enemies' = fmap (\(_, xy) -> xy) enemies
+      enemiesOpen' = concat . toList $ fmap (flip openMoves board) enemies'
   in undefined
 
 -- all actions are completed and written back to the board
