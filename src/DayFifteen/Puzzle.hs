@@ -40,6 +40,7 @@ import Data.Foldable (toList)
 -- #######
 
 data Tile = Wall | Elf | Goblin | Open
+          deriving Eq
 instance Show Tile where
   show Wall   = "#"
   show Elf    = "E"
@@ -110,6 +111,47 @@ characterLocations board =
   let board' = withCoordinates board
   in filter (isCharacter . fst) (foldr (><) mempty board')
 
+enemy :: Tile -> Tile
+enemy Goblin = Elf
+enemy Elf    = Goblin
+
+readSpot :: Int -> Int -> Board -> Maybe Tile
+readSpot x y board =
+  case (board !? y) of
+    Nothing   -> Nothing
+    Just yRow -> yRow !? x
+
+getSurrounding :: Int -> Int -> Board -> a
+getSurrounding x y board =
+  let
+    xRange = [x-1..x+1]
+    yRange = [y-1..y+1]
+    spots = map (\x -> (\y -> (x, y)) xRange) yRange
+  in undefined
+
+openMoves :: (Tile, (Int, Int)) -> Board -> (Int, Int)
+openMoves (_, (x, y)) = undefined
+
+runTurn :: (Tile, (Int, Int)) -> Board -> a
+runTurn character board =
+  let locs = characterLocations board
+      (meKind, _) = character
+      enemies = filter (\(kind, _) -> kind == enemy meKind) locs
+      enemiesOpen' = fmap (flip openMoves board) enemies
+  in undefined
+
+-- all actions are completed and written back to the board
+-- each turn
+turn :: Board -> Board
+turn board =
+  let locs = characterLocations board
+  in foldr runTurn board locs
+
 partOne = do
   res <- readFile "src/DayFifteen/Data.txt"
   print "hoo boy"
+
+-- set the first index of a set to "what"
+-- a & ix 0 .~ "what"
+-- view the first index of a set
+-- a ^. ix 0
