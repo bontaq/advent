@@ -154,21 +154,21 @@ writeBoard t (x, y) b =
       newRow = update x t oldRow
   in update y newRow b
 
--- round -> last round -> board -> board
 cost' :: Int -> [(X, Y)] -> Board -> Board
 cost' _ []            board = board  -- no more open
 cost' round lastMoves board =
   let
-    newRound = round + 1
-    newMoves = foldr ((++) . (flip openMoves board)) [] lastMoves
-    newBoard = foldr (\(x, y) b -> undefined) board newMoves
-  in undefined
+    newBoard = foldr
+      (\(x, y) b -> writeBoard (Cost round) (x, y) b) board lastMoves
+
+    newMoves = foldr ((++) . (flip openMoves newBoard)) [] lastMoves
+  in cost' (round + 1) newMoves newBoard
 
 -- fill board with costs from loc
 costBoard :: (X, Y) -> Board -> Board
 costBoard coord board =
   let node = coord
-  in (\x acc -> undefined) board node
+  in cost' 1 (openMoves node board) board
 
 -- start from the target and walk out
 move :: Start -> EnemyPositions -> Board -> End
