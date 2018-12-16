@@ -121,13 +121,13 @@ readSpot x y board =
     Nothing   -> Nothing
     Just yRow -> yRow !? x
 
-getSurrounding :: Int -> Int -> Board -> a
+getSurrounding :: Int -> Int -> Board -> [[Maybe Tile]]
 getSurrounding x y board =
   let
     xRange = [x-1..x+1]
     yRange = [y-1..y+1]
-    spots = map (\x -> (\y -> (x, y)) xRange) yRange
-  in undefined
+    spots = map (\y -> map (\x -> readSpot x y board) xRange) yRange
+  in spots
 
 openMoves :: (Tile, (Int, Int)) -> Board -> (Int, Int)
 openMoves (_, (x, y)) = undefined
