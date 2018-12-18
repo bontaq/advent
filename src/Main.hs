@@ -7,6 +7,7 @@ import qualified DayFour.Puzzle as DayFour
 import qualified DayFive.Puzzle as DayFive
 import qualified DayFourteen.Puzzle as DayFourteen
 import qualified DayFifteen.Puzzle as DayFifteen
+import qualified DayEighteen.Puzzle as DayEighteen
 
 main :: IO ()
 main = do
@@ -23,4 +24,6 @@ main = do
 
   -- DayFourteen.partOne
   -- DayFourteen.partTwo
-  DayFifteen.partOne
+
+  -- DayFifteen.partOne
+  DayEighteen.partOne
