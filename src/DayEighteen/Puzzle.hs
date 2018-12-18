@@ -101,8 +101,8 @@ withCoordinates board =
   in zipWith zip board coords
 
 runMinute :: Board -> Board
-runMinute =
-  let withCoords = 1
-  in undefined
+runMinute board =
+  let withCoords = withCoordinates board
+  in board
 
 partOne = print "sup"
