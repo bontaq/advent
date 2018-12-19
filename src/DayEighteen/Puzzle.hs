@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module DayEighteen.Puzzle where
@@ -51,7 +52,7 @@ mkTile '|' = Forest
 
 mkBoard :: [Char] -> [[Tile]]
 mkBoard =
-  map (\row -> map (\c -> mkTile c) row) . tokenize
+  id $! map (\row -> map (\c -> mkTile c) row) . tokenize
   where
     tokenize = filter ((> 0) . length) . lines
 
@@ -60,49 +61,79 @@ collectTile ((Just t), c) = Just (t, c)
 collectTile (Nothing, _)  = Nothing
 
 collectTiles :: [(Maybe a, b)] -> [(a, b)]
-collectTiles = catMaybes . map collectTile
+collectTiles = id $! catMaybes . map collectTile
 
-getSurrounding :: Board -> (Int, Int) -> [(Tile, (Int, Int))]
-getSurrounding board (x, y) =
+getSurrounding :: (Int, Int) -> Board -> [(Tile, (Int, Int))]
+getSurrounding (x, y) board =
   let coords = [ (0, 0), (1, 0), (2, 0)
                , (0, 1),         (2, 1)
                , (0, 2), (1, 2), (2, 2) ]
       adjustedCoords = map (\(x', y') -> (x' + x - 1, y' + y - 1)) coords
-  in collectTiles $ map (\(x, y) -> (board ^? ix x . ix y, (x, y))) adjustedCoords
+  in id $! collectTiles $ map (\(x, y) -> (board ^? ix x . ix y, (x, y))) adjustedCoords
 
 getByTile :: Tile -> [(Tile, b)] -> [(Tile, b)]
-getByTile t = filter ((==) t . fst)
+getByTile t = id $! filter ((==) t . fst)
 
 getNextTile :: Tile -> [(Tile, (Int, Int))] -> Tile
 getNextTile Open       surrounding
   | fs >= 3   = Forest
   | otherwise = Open
-  where fs = length $ getByTile Forest surrounding
+  where !fs = length $ getByTile Forest surrounding
 
 getNextTile Forest     surrounding
   | ls >= 3   = Lumberyard
   | otherwise = Forest
-  where ls = length $ getByTile Lumberyard surrounding
+  where !ls = length $ getByTile Lumberyard surrounding
 
 getNextTile Lumberyard surrounding
   | ls > 0 && fs > 0 = Lumberyard
   | otherwise = Open
-  where ls = length $ getByTile Lumberyard surrounding
-        fs = length $ getByTile Forest surrounding
+  where !ls = length $ getByTile Lumberyard surrounding
+        !fs = length $ getByTile Forest surrounding
 
 groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
-groupByX = groupBy (\(x, _) (x', _) -> x == x')
+groupByX = id $! groupBy (\(x, _) (x', _) -> x == x')
 
 withCoordinates :: Board -> [[(Tile, (Int, Int))]]
-withCoordinates board =
-  let x = length board
-      y = length (board !! 0)
-      coords = groupByX $ liftA2 (,) ([0..x]) ([0..y])
-  in zipWith zip board coords
+withCoordinates !board =
+  let !x = length board
+      !y = length (board !! 0)
+      !coords = groupByX $ liftA2 (,) ([0..x]) ([0..y])
+  in id $! zipWith zip board coords
 
 runMinute :: Board -> Board
-runMinute board =
-  let withCoords = withCoordinates board
-  in board
+runMinute !board =
+  let !withCoords = withCoordinates board
+  in
+    id $! map (\row ->
+          id $! map
+          (\(tile, (x, y)) ->
+            id $! getNextTile tile $ getSurrounding (x, y) board)
+          row)
+    withCoords
 
-partOne = print "sup"
+runMinutes :: Int -> Board -> Board
+runMinutes 0 !b = b
+runMinutes !i !b =
+  let !newBoard = runMinute b
+      !newI = i - 1
+  in runMinutes newI newBoard
+
+partOne = do
+  board' <- readFile "./src/DayEighteen/Data.txt"
+  let ansBoard = runMinutes 10 (mkBoard board')
+      woodCount = length $ filter (== Forest) $ concat ansBoard
+      lumberCount = length $ filter (== Lumberyard) $ concat ansBoard
+  print woodCount
+  print lumberCount
+  print (woodCount * lumberCount)
+  -- showBoard $ runMinutes 10 (mkBoard board')
+
+partTwo = do
+  board' <- readFile "./src/DayEighteen/Data.txt"
+  let !ansBoard = runMinutes 1000000000 (mkBoard board')
+      woodCount = length $ filter (== Forest) $ concat ansBoard
+      lumberCount = length $ filter (== Lumberyard) $ concat ansBoard
+  print woodCount
+  print lumberCount
+  print (woodCount * lumberCount)
