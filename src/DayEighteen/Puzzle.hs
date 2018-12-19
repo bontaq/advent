@@ -7,7 +7,6 @@ module DayEighteen.Puzzle where
 import Prelude hiding (filter, length, zip, zipWith, concat)
 import Text.RawString.QQ (r)
 import Control.Applicative
--- import Control.Lens
 import Data.Maybe (catMaybes, fromJust)
 import Data.List (groupBy)
 import Data.Sequence
@@ -49,8 +48,6 @@ type Board = Seq (Seq Tile)
 -- showBoard :: Board -> IO ()
 -- showBoard = mapM_ (print . (filter (/= ',')) . show)
 
--- mkTile :: Char -> Tile
--- mkTile :: a -> Tile
 mkTile :: Char -> Tile
 mkTile '.' = Open
 mkTile '#' = Lumberyard
@@ -70,25 +67,25 @@ collectTile :: (Maybe a, b) -> Maybe (a, b)
 collectTile ((Just t), c) = Just (t, c)
 collectTile (Nothing, _)  = Nothing
 
-collectTiles :: [(Maybe a, b)] -> [(a, b)]
-collectTiles tiles = catMaybes $ map collectTile tiles
+unpackMaybes :: Seq (Maybe Tile, b) -> Seq (Tile, b)
+unpackMaybes = foldr (\(Just a, b) acc -> (a, b) <| acc) mempty . filter ((/= Nothing) . fst)
 
-coordAdjustments :: [(Int, Int)]
-coordAdjustments = [ (0, 0), (1, 0), (2, 0)
-                   , (0, 1),         (2, 1)
-                   , (0, 2), (1, 2), (2, 2) ]
+coordAdjustments :: Seq (Int, Int)
+coordAdjustments = fromList [ (0, 0), (1, 0), (2, 0)
+                            , (0, 1),         (2, 1)
+                            , (0, 2), (1, 2), (2, 2) ]
 
-adjustedCoords :: (Num a, Num b) => a -> b -> [(a, b)] -> [(a, b)]
-adjustedCoords x y coords = map (\(x', y') -> ( x' + x - 1
-                                             ,  y' + y - 1) ) coords
+adjustedCoords :: (Num a, Num b) => a -> b -> Seq (a, b) -> Seq (a, b)
+adjustedCoords x y = fmap (\(x', y') -> (  x' + x - 1
+                                        ,  y' + y - 1 ))
 
 getSurrounding :: (Int, Int) -> Board -> Seq (Tile, (Int, Int))
 getSurrounding (x, y) board =
   let coords = coordAdjustments
       adjustedCoords' = adjustedCoords x y coords
-  in fromList
-     $ collectTiles
-     $ map (\(x, y) ->
+  in
+    unpackMaybes
+    $ fmap (\(x, y) ->
              ((board !? x) >>= (flip (!?) y), (x, y))) adjustedCoords'
 
 getByTile :: Eq a => a -> Seq (a, b) -> Seq (a, b)
@@ -115,22 +112,20 @@ groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
 groupByX = groupBy (\(x, _) (x', _) -> x == x')
 
 withCoordinates :: Board -> Seq (Seq (Tile, (Int, Int)))
-withCoordinates !board =
+withCoordinates board =
   let x = length board
       y = length $ fromJust (board !? 0)
       coords = groupByX $ liftA2 (,) ([0..x]) ([0..y])
   in zipWith zip board $ fromList $ map fromList coords
 
 runMinute :: Board -> Board
-runMinute !board =
+runMinute board =
   let withCoords = withCoordinates board
   in
-    fromList
-    $ (map fromList)
-    $ map (\row -> map
-                  (\(tile, (x, y)) -> getNextTile tile $ getSurrounding (x, y) board)
-                  row)
-    $ (map toList) $ toList withCoords
+    fmap (\row -> fmap
+           (\(tile, (x, y)) -> getNextTile tile $ getSurrounding (x, y) board)
+           row)
+    withCoords
 
 runMinutes :: Int -> Board -> Board
 runMinutes 0 b  = b
@@ -149,7 +144,7 @@ partOne = do
 
 partTwo = do
   board' <- readFile "./src/DayEighteen/Data.txt"
-  let !ansBoard = runMinutes 10000 (mkBoard board')
+  let ansBoard = runMinutes 1000 (mkBoard board')
       woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
       lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
   print woodCount
