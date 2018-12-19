@@ -4,6 +4,8 @@ import Text.Parser.Combinators
 import Text.Parser.Char
 import Text.Parser.Token
 import Text.Trifecta.Parser (Parser, parseString, parseFromFile)
+import Data.Bits
+import Control.Lens
 
 data Example = Example [Integer] [Integer] [Integer]
              deriving Show
@@ -53,6 +55,17 @@ exampleParse = do
   pure $ Example before command after
 
 registers = [0, 0, 0, 0]
+
+type Command = ([Char], Integer, Integer, Integer)
+type Register = (Integer, Integer, Integer, Integer)
+
+runCommand :: Command -> [Int] -> [Int]
+runCommand (op, a, b, c) r@[a', b', c', d'] =
+  case op of
+    "addr" -> set (ix c) (r !! a + r !! b) r
+    "addi" -> set (ix c) (r !! a + b) r
+
+    "mulr" -> set (ix c) (r !! a * r !! b) r
 
 -- 16 opcodes
 -- every instruction go:
