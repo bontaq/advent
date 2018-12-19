@@ -10,6 +10,7 @@ import Control.DeepSeq (force)
 import Data.Maybe (catMaybes, fromJust)
 import Data.List (groupBy)
 import Data.Sequence
+import Control.Exception.Base
 import Data.Foldable (toList, concat)
 
 
@@ -123,12 +124,15 @@ runMinute board =
     withCoords
 
 runMinutes :: Int -> Board -> IO ()
-runMinutes 0 b = print "done"
+runMinutes 0 b = do
+  let ansBoard = b
+      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
+      lumberCount = force length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
+  print $ (woodCount * lumberCount)
 runMinutes i b = do
   let ansBoard = runMinute b
-      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
       lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
-  print $ (woodCount * lumberCount)
+  _ <- evaluate lumberCount
   runMinutes (i - 1) ansBoard
 
 partOne = do
