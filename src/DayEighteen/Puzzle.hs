@@ -123,21 +123,24 @@ runMinute board =
            row)
     withCoords
 
-runMinutes :: Int -> Board -> IO ()
-runMinutes 0 b = do
+runMinutes :: Int -> [Int] -> Board -> IO ()
+runMinutes 0 arr b = do
   let ansBoard = b
       woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
       lumberCount = force length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
-  print $ (woodCount * lumberCount)
-runMinutes i b = do
+  print arr
+--  print $ (woodCount * lumberCount)
+--  print ansBoard
+runMinutes i arr b = do
   let ansBoard = runMinute b
       lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
+      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
   _ <- evaluate lumberCount
-  runMinutes (i - 1) ansBoard
+  runMinutes (i - 1) ((woodCount * lumberCount) : arr) ansBoard
 
-partOne = do
-  board' <- readFile "./src/DayEighteen/Data.txt"
-  runMinutes 10 (mkBoard board')
+-- partOne = do
+--   board' <- readFile "./src/DayEighteen/Data.txt"
+--   runMinutes 10 (mkBoard board')
 partTwo = do
   board' <- readFile "./src/DayEighteen/Data.txt"
-  runMinutes 1000000000 (mkBoard board')
+  runMinutes 1000 [] (mkBoard board')
