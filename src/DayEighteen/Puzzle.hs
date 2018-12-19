@@ -1,4 +1,3 @@
-{-# LANGUAGE Strict #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
@@ -7,6 +6,7 @@ module DayEighteen.Puzzle where
 import Prelude hiding (filter, length, zip, zipWith, concat)
 import Text.RawString.QQ (r)
 import Control.Applicative
+import Control.DeepSeq (force)
 import Data.Maybe (catMaybes, fromJust)
 import Data.List (groupBy)
 import Data.Sequence
@@ -63,10 +63,6 @@ mkBoard raw =
     $ map (\row -> fromList $ map (\c -> mkTile c) (toList row))
     $ toList tokenized
 
-collectTile :: (Maybe a, b) -> Maybe (a, b)
-collectTile ((Just t), c) = Just (t, c)
-collectTile (Nothing, _)  = Nothing
-
 unpackMaybes :: Seq (Maybe Tile, b) -> Seq (Tile, b)
 unpackMaybes = foldr (\(Just a, b) acc -> (a, b) <| acc) mempty . filter ((/= Nothing) . fst)
 
@@ -111,42 +107,33 @@ getNextTile Lumberyard surrounding
 groupByX :: Eq a => [(a, b)] -> [[(a, b)]]
 groupByX = groupBy (\(x, _) (x', _) -> x == x')
 
+coords = (fromList . map fromList) $ groupByX $ liftA2 (,) ([0..50]) ([0..50])
+
 withCoordinates :: Board -> Seq (Seq (Tile, (Int, Int)))
 withCoordinates board =
-  let x = length board
-      y = length $ fromJust (board !? 0)
-      coords = groupByX $ liftA2 (,) ([0..x]) ([0..y])
-  in zipWith zip board $ fromList $ map fromList coords
+  mapWithIndex (\y row -> mapWithIndex (\x t -> (t, (y, x))) row) board
 
 runMinute :: Board -> Board
 runMinute board =
-  let withCoords = withCoordinates board
+  let withCoords = force withCoordinates board
   in
     fmap (\row -> fmap
            (\(tile, (x, y)) -> getNextTile tile $ getSurrounding (x, y) board)
            row)
     withCoords
 
-runMinutes :: Int -> Board -> Board
-runMinutes 0 b  = b
+runMinutes :: Int -> Board -> IO ()
+runMinutes 0 b = print "done"
 runMinutes i b = do
-  let newBoard = runMinute b
-  runMinutes (i - 1) newBoard
+  let ansBoard = runMinute b
+      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
+      lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
+  print $ (woodCount * lumberCount)
+  runMinutes (i - 1) ansBoard
 
 partOne = do
   board' <- readFile "./src/DayEighteen/Data.txt"
-  let ansBoard = runMinutes 10 (mkBoard board')
-      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
-      lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
-  print woodCount
-  print lumberCount
-  print (woodCount * lumberCount)
-
+  runMinutes 10 (mkBoard board')
 partTwo = do
   board' <- readFile "./src/DayEighteen/Data.txt"
-  let ansBoard = runMinutes 1000 (mkBoard board')
-      woodCount = length $ filter (== Forest) $ foldr (><) mempty ansBoard
-      lumberCount = length $ filter (== Lumberyard) $ foldr (><) mempty ansBoard
-  print woodCount
-  print lumberCount
-  print (woodCount * lumberCount)
+  runMinutes 1000000000 (mkBoard board')
