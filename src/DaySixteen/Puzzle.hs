@@ -56,8 +56,8 @@ exampleParse = do
 
 registers = [0, 0, 0, 0]
 
-type Command = ([Char], Integer, Integer, Integer)
-type Register = (Integer, Integer, Integer, Integer)
+type Command = ([Char], Int, Int, Int)
+type Register = (Int, Int, Int, Int)
 
 runCommand :: Command -> [Int] -> [Int]
 runCommand (op, a, b, c) r@[a', b', c', d'] =
