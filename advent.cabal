@@ -25,3 +25,13 @@ executable advent
                      , raw-strings-qq
                      , vector
                      , lens
+
+  other-modules:
+                DayOne.Puzzle
+              , DayTwo.Puzzle
+              , DayThree.Puzzle
+              , DayFour.Puzzle
+              , DayFive.Puzzle
+              , DayFourteen.Puzzle
+              , DayFiteen.Puzzle
+              , DaiEighteen.Puzzle

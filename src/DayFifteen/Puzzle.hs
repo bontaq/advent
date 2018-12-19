@@ -9,7 +9,7 @@ import Control.Applicative
 import Data.List (groupBy)
 import Data.Sequence
 import Data.Foldable (toList)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromJust)
 -- import Control.Lens
 
 
