@@ -35,4 +35,5 @@ executable advent
               , DayFive.Puzzle
               , DayFourteen.Puzzle
               , DayFifteen.Puzzle
+              , DaySixteen.Puzzle
               , DayEighteen.Puzzle
