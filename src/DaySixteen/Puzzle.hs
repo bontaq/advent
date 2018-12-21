@@ -152,17 +152,16 @@ handleCountOps examples  =
   let table = map (\op -> map (\ex -> (op, getOpcode ex, testCmd' op ex)) examples) ops
   in filter (\(_, _, b) -> b == True) $ concat table
 
-bestCandidate :: Op -> [(Op, Int, Bool)] -> Int
+bestCandidate :: Op -> [(Op, Int, Bool)] -> [[Int]]
 bestCandidate op res =
   let eqs = filter (\(op', _, _) -> op == op') res
       codes = map (\(_, code, _) -> code) eqs
       sortByLength = sortBy (\a b -> compare (length b) (length a))
-  in head . head . sortByLength . group $ sort codes
+  in sortByLength . group $ sort codes
 
 partTwo = do
   res <- parseFromFile (many exampleParse) "./src/DaySixteen/DataOne.txt"
   let figureOps = fmap handleCountOps res
-      best = fmap (bestCandidate "addr") figureOps
+      best = fmap (\raw -> map (\op -> (op, bestCandidate op raw)) ops) figureOps
 
   print best
-  -- print "F"
