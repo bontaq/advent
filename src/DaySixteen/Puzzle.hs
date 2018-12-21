@@ -159,9 +159,35 @@ bestCandidate op res =
       sortByLength = sortBy (\a b -> compare (length b) (length a))
   in sortByLength . group $ sort codes
 
+known = [
+  ("muli", 6)
+  , ("addi", 9)
+  , ("addr", 12)
+  , ("bori", 2)
+  , ("borr", 11)
+  , ("mulr", 3)
+  , ("setr", 8)
+  , ("seti", 4)
+  , ("bani", 5)
+  , ("banr", 1)
+  , ("gitr", 10)
+  , ("eqrr", 13)
+  , ("eqir", 15)
+  , ("gtri", 14)
+  , ("gtrr", 7)
+  , ("eqri", 0)
+  ]
+
+removeKnown :: [(String, Int, Bool)] -> [(String, Int, Bool)]
+removeKnown examples =
+  let knownOpCodes = map snd known
+  in filter (\(_, e, _) -> not $ elem e knownOpCodes) examples
+
 partTwo = do
   res <- parseFromFile (many exampleParse) "./src/DaySixteen/DataOne.txt"
   let figureOps = fmap handleCountOps res
-      best = fmap (\raw -> map (\op -> (op, bestCandidate op raw)) ops) figureOps
+      cleaned = fmap removeKnown figureOps
+      best = fmap (\raw -> map (\op -> (op, bestCandidate op raw)) ops) cleaned
+      singulars = fmap (\raw -> filter (\(op, candidates) -> (length candidates) == 1) raw) best
 
-  print best
+  print singulars
