@@ -5,7 +5,9 @@ import Text.Parser.Char
 import Text.Parser.Token
 import Text.Trifecta.Parser (Parser, parseString, parseFromFile)
 import Data.Bits
-import Data.List
+import Data.List (sortBy, group, sort)
+import Data.Map (lookup, fromList)
+import Data.Maybe (fromJust)
 import Control.Lens
 
 data Example = Example [Int] [Int] [Int]
@@ -86,6 +88,7 @@ runCommand (op, a, b, c) r@[a', b', c', d'] =
     "eqir" -> set (ix c) (if a == r !! b then 1 else 0) r
     "eqri" -> set (ix c) (if r !! a == b then 1 else 0) r
     "eqrr" -> set (ix c) (if r !! a == r !! b then 1 else 0) r
+    _ -> error op
 
 ops = [
   "addr"
@@ -158,32 +161,31 @@ bestCandidate op res =
       codes = map (\(_, code, _) -> code) eqs
       sortByLength = sortBy (\a b -> compare (length b) (length a))
   in sortByLength . group $ sort codes
-
 known = [
-  ("muli", 6)
-  , ("addi", 9)
-  , ("addr", 12)
-  , ("bori", 2)
-  , ("borr", 11)
-  , ("mulr", 3)
-  , ("setr", 8)
-  , ("seti", 4)
-  , ("bani", 5)
-  , ("banr", 1)
-  , ("gitr", 10)
-  , ("eqrr", 13)
-  , ("eqir", 15)
-  , ("gtri", 14)
-  , ("gtrr", 7)
-  , ("eqri", 0)
+  (6, "muli")
+  , (9,  "addi")
+  , (12, "addr")
+  , (2,  "bori")
+  , (11, "borr")
+  , (3,  "mulr")
+  , (8,  "setr")
+  , (4,  "seti")
+  , (5,  "bani")
+  , (1,  "banr")
+  , (10, "gtir")
+  , (13, "eqrr")
+  , (15, "eqir")
+  , (14, "gtri")
+  , (7,  "gtrr")
+  , (0,  "eqri")
   ]
 
 removeKnown :: [(String, Int, Bool)] -> [(String, Int, Bool)]
 removeKnown examples =
-  let knownOpCodes = map snd known
+  let knownOpCodes = map fst known
   in filter (\(_, e, _) -> not $ elem e knownOpCodes) examples
 
-partTwo = do
+figuringOutWhichCodes = do
   res <- parseFromFile (many exampleParse) "./src/DaySixteen/DataOne.txt"
   let figureOps = fmap handleCountOps res
       cleaned = fmap removeKnown figureOps
@@ -191,3 +193,20 @@ partTwo = do
       singulars = fmap (\raw -> filter (\(op, candidates) -> (length candidates) == 1) raw) best
 
   print singulars
+
+runCommands :: [[Integer]] -> [Int]
+runCommands cmds =
+  let cmds' = map (map fromInteger) cmds
+      knownMap = fromList known
+      cmdLookup c = fromJust $ Data.Map.lookup c knownMap
+  in foldr (\[op, a, b, c] register -> runCommand (cmdLookup op, a, b, c) register) [0, 0, 0, 0] (reverse cmds')
+
+smallTest = "6 0 0 3\n9 3 2 3\n"
+-- and in this one, we run the program
+partTwo = do
+  res <- parseFromFile (many commandParse) "./src/DaySixteen/DataTwo.txt"
+  let go = fmap runCommands res
+      test = runCommands [[6, 0, 0, 3], [9, 3, 2, 3]]
+  -- res >>= pure $ runCommands
+  print go
+  print test
