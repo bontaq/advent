@@ -51,31 +51,31 @@ data Region = Region X Y
 --              is 2 -> Narrow
 type Target = Int
 type Depth  = Int
+type Width  = Int
 
 erode n d = (d + n) `mod` 20183
 
 geoindex :: Int -> Int -> Int -> Seq Int -> Int
-geoindex t p d b
+geoindex width point d b
   | y == 0 && x == 0 = 0
-  -- | (t * t) == p = 0
-  | y == (t - 1) && x == (t - 1) = 0
+  | y == (width - 1) && x == (width - 1) = 0
   | y == 0 = x * 16807
   | x == 0 = y * 48271
   | otherwise =
-    let x' = (index b ((y * t) + (x - 1)))
-        y' = (index b (((y - 1) * t) + x))
+    let x' = (index b ((y * width) + (x - 1)))
+        y' = (index b (((y - 1) * width) + x))
     in (erode x' d) * (erode y' d)
   where
-    y = p `div` t
-    x = p `mod` t
+    y = point `div` width
+    x = point `mod` width
 
-genGeodex :: Target -> Int -> Depth -> Seq Int -> [Int]
-genGeodex t p d b
-  | (t * t) == p = []
+genGeodex :: Width -> Int -> Depth -> Seq Int -> [Int]
+genGeodex width p d b
+  | (width * width) == p = []
   | otherwise =
-    let g = geoindex t p d b
+    let g = geoindex width p d b
         newBoard = b |> g
-    in g : genGeodex t (p + 1) d newBoard
+    in g : genGeodex width (p + 1) d newBoard
 
 genErosion :: Depth -> [Int] -> [Kind]
 genErosion _     []     = []
