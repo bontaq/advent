@@ -26,6 +26,7 @@ executable advent
                      , vector
                      , lens
                      , deepseq
+                     , array
 
   other-modules:
                 DayOne.Puzzle

@@ -10,6 +10,7 @@ import qualified DayFifteen.Puzzle as DayFifteen
 import qualified DaySixteen.Puzzle as DaySixteen
 import qualified DayEighteen.Puzzle as DayEighteen
 import qualified DayTwentyTwo.Puzzle as DayTwentyTwo
+import qualified DayTwentyTwo.Sure as Sure
 
 main :: IO ()
 main = do
@@ -39,4 +40,5 @@ main = do
   -- DayEighteen.partOne
   -- DayEighteen.partTwo
 
-  DayTwentyTwo.partOne
+  -- DayTwentyTwo.partOne
+  print . show $ Sure.day22a

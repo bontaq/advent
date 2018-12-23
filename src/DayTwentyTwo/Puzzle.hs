@@ -9,7 +9,7 @@ import Data.Foldable (toList)
 
 -- puzzle input
 depth = 6969
-target = 9796
+target = (9, 796)
 
 -- test input
 depth' = 510
