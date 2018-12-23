@@ -3,7 +3,9 @@
 
 module DayTwentyTwo.Puzzle where
 
-import Control.Lens
+-- import Control.Lens
+import Data.Sequence
+import Data.Foldable (toList)
 
 -- puzzle input
 depth = 6969
@@ -52,29 +54,28 @@ type Depth  = Int
 
 erode n d = (d + n) `mod` 20183
 
-geoindex :: Int -> Int -> Int -> [Int] -> Int
+geoindex :: Int -> Int -> Int -> Seq Int -> Int
 geoindex t p d b
   | y == 0 && x == 0 = 0
-  | y == t && x == t = 0
+  -- | (t * t) == p = 0
+  | y == (t - 1) && x == (t - 1) = 0
   | y == 0 = x * 16807
   | x == 0 = y * 48271
   | otherwise =
-    let x' = (b !! ((y * t) + (x - 1)))
-        y' = (b !! (((y - 1) * t) + x))
+    let x' = (index b ((y * t) + (x - 1)))
+        y' = (index b (((y - 1) * t) + x))
     in (erode x' d) * (erode y' d)
   where
     y = p `div` t
     x = p `mod` t
 
--- the width is known -- 10
--- so y = 11
-genGeodex :: Target -> Int -> Depth -> [Int] -> [Int]
+genGeodex :: Target -> Int -> Depth -> Seq Int -> [Int]
 genGeodex t p d b
-  | (t * t) == p = b
+  | (t * t) == p = []
   | otherwise =
     let g = geoindex t p d b
-        newBoard = b <> [g]
-    in genGeodex t (p + 1) d newBoard
+        newBoard = b |> g
+    in g : genGeodex t (p + 1) d newBoard
 
 genErosion :: Depth -> [Int] -> [Kind]
 genErosion _     []     = []
@@ -86,4 +87,25 @@ genErosion depth (i:is) =
       1 -> Wet    : genErosion depth is
       2 -> Narrow : genErosion depth is
 
-partOne = print "blup"
+findDanger :: [Kind] -> Int
+findDanger ks =
+  let danger k = case k of
+        Rocky  -> 0
+        Wet    -> 1
+        Narrow -> 2
+  in
+    foldr ((+) . danger) 0 ks
+
+group :: Int -> [a] -> [[a]]
+group _ [] = []
+group n l
+  | n > 0 = (Prelude.take n l) : (group n (Prelude.drop n l))
+  | otherwise = error "Negative n"
+
+-- wrong: 95970117
+
+partOne = do
+  print . show $
+    findDanger
+    $ genErosion (depth')
+    $ genGeodex (target' + 1) 0 (depth') mempty
