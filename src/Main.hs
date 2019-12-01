@@ -1,16 +1,6 @@
 module Main where
 
 import qualified DayOne.Puzzle as DayOne
-import qualified DayTwo.Puzzle as DayTwo
-import qualified DayThree.Puzzle as DayThree
-import qualified DayFour.Puzzle as DayFour
-import qualified DayFive.Puzzle as DayFive
-import qualified DayFourteen.Puzzle as DayFourteen
-import qualified DayFifteen.Puzzle as DayFifteen
-import qualified DaySixteen.Puzzle as DaySixteen
-import qualified DayEighteen.Puzzle as DayEighteen
-import qualified DayTwentyTwo.Puzzle as DayTwentyTwo
-import qualified DayTwentyTwo.Sure as Sure
 
 main :: IO ()
 main = do
