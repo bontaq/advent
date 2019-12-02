@@ -27,9 +27,11 @@ runProgram offset program =
     store = program ! (offset + 3)
   in
     case opcode of
-      1 -> runProgram (offset + 4) $ (program // [(store, v0 + v1)])
-      2 -> runProgram (offset + 4) $ (program // [(store, v0 * v1)])
-      _ -> program
+      99 -> program
+      _  -> runProgram (offset + 4) (program // [(store, op v0 v1)])
+        where op = case opcode of
+                1 -> (+)
+                2 -> (*)
 
 partOne :: IO ()
 partOne = do
