@@ -21,27 +21,14 @@ numbers = many number
 runProgram :: Int -> Vector Integer -> Vector Integer
 runProgram offset program =
   let
-    opcode =  program ! offset
+    opcode = program ! offset
+    v0 = program ! (fromIntegral (program ! (offset + 1)))
+    v1 = program ! (fromIntegral (program ! (offset + 2)))
+    store = program ! (offset + 3)
   in
     case opcode of
-      1 ->
-        let
-          p0 = program ! (offset + 1)
-          v0 = program ! (fromIntegral p0)
-          p1 = program ! (offset + 2)
-          v1 = program ! (fromIntegral p1)
-          store = program ! (offset + 3)
-        in
-          runProgram (offset + 4) $ (program // [(fromIntegral store, v0 + v1)])
-      2 ->
-        let
-          p0 = program ! (offset + 1)
-          v0 = program ! (fromIntegral p0)
-          p1 = program ! (offset + 2)
-          v1 = program ! (fromIntegral p1)
-          store = program ! (offset + 3)
-        in
-          runProgram (offset + 4) $ (program // [(fromIntegral store, v0 * v1)])
+      1 -> runProgram (offset + 4) $ (program // [(fromIntegral store, v0 + v1)])
+      2 -> runProgram (offset + 4) $ (program // [(fromIntegral store, v0 * v1)])
       _ -> program
 
 partOne :: IO ()
