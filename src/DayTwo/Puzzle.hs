@@ -1,4 +1,4 @@
-module Puzzle where
+module DayTwo.Puzzle where
 
 import Text.Parser.Combinators (many, try, optional)
 import Text.Parser.Token (token, integer)
@@ -53,9 +53,9 @@ partOne = do
 
   print ran
 
-runPossiblities :: [(Integer, Integer)] -> [Integer] -> Integer
+runPossiblities :: [(Integer, Integer)] -> Vector Integer -> Integer
 runPossiblities ((a, b):xs) program =
-     let fixed = ((\x -> x // [(1, a), (2, b)]) . fromList) program
+     let fixed = (\x -> x // [(1, a), (2, b)]) program
          ran = (runProgram 0) fixed
      in
        case ran ! 0 of
@@ -66,6 +66,6 @@ partTwo :: IO ()
 partTwo = do
   let
     parsed = parseString numbers mempty input
-    combinations = (,) <$> [0..99] <*> [0..99]
+    combinations = [(a, b) | a <- [0..99], b <- [0..99]]
 
-  print . show  $ fmap (runPossiblities combinations) parsed
+  print . show  $ fmap (runPossiblities combinations . fromList) parsed

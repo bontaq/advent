@@ -1,4 +1,4 @@
-module Puzzle where
+module DayOne.Puzzle where
 
 import Text.Parser.Combinators (many)
 import Text.Parser.Token (token, integer)
