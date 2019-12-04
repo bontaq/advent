@@ -6,7 +6,6 @@ import Text.Parser.Token (token, integer)
 import Text.Parser.Char (char, oneOf)
 import Text.Trifecta.Parser (Parser, parseFromFile, parseString)
 import Text.Trifecta.Result
-import Data.List (intersect)
 import qualified Data.Set as S
 
 data Direction = Right | Left | Up | Down
@@ -32,31 +31,20 @@ pairs = many pair
 
 rev :: Integer -> [Integer] -> [Integer]
 rev 0 bs = 0 : bs
-rev a bs = (a) : rev (a - 1) bs
+rev a bs = a : rev (a - 1) bs
 
 walk :: [(Direction, Distance)] -> Location -> S.Set Location -> S.Set Location
 walk ((direction, distance):remainingDirections) lastLoc locs =
   let
     (lastX, lastY) = lastLoc
+    newLocsRange = rev distance []
+    newLocs = case direction of
+      Right -> [ (lastX + x, lastY) | x <- newLocsRange ]
+      Left  -> [ (lastX - x, lastY) | x <- newLocsRange ]
+      Up    -> [ (lastX, lastY + y) | y <- newLocsRange ]
+      Down  -> [ (lastX, lastY - y) | y <- newLocsRange ]
   in
-    case direction of
-      Right ->
-        let
-          newLocs = [ (lastX + x, lastY) | x <- rev distance [] ]
-        in
-          walk remainingDirections (head newLocs) (S.fromList newLocs) <> locs
-      Left  ->
-        let newLocs = [ (lastX - x, lastY) | x <- rev distance [] ]
-        in
-          walk remainingDirections (head newLocs) (S.fromList newLocs) <> locs
-      Up    ->
-        let newLocs = [ (lastX, lastY + y) | y <- rev distance [] ]
-        in
-          walk remainingDirections (head newLocs) (S.fromList newLocs) <> locs
-      Down  ->
-        let newLocs = [ (lastX, lastY - y) | y <- rev distance [] ]
-        in
-          walk remainingDirections (head newLocs) (S.fromList newLocs) <> locs
+    walk remainingDirections (head newLocs) (S.fromList newLocs) <> locs
 walk _ _ locs        = locs
 
 calcDistance (0, 0) = 99999
@@ -75,3 +63,12 @@ partOne = do
        print $ minimum distances
 
    pure ()
+
+partTwo :: IO ()
+partTwo = do
+  f <- readFile "./src/DayThree/data.txt"
+  let parsed = fmap (parseString pairs mempty) (lines f)
+      (w:ws) = fmap (\x -> fmap (\ds -> walk ds (0, 0) mempty) x) parsed
+      intersected = foldr (\(Success a) (Success b) -> Success (S.intersection a b)) w ws
+
+  pure ()
