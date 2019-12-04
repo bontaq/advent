@@ -30,3 +30,5 @@ executable advent
 
   other-modules:
                 DayOne.Puzzle
+                , DayTwo.Puzzle
+                , DayThree.Puzzle
