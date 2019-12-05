@@ -87,13 +87,13 @@ walkCost locs = foldl realCost 0 locs
     realCost item cost | trace (show item <> " " <> show cost) False = undefined
     realCost cost item =
       case Q.elemIndexL item locs of
-        Just i -> i
+        Just i -> i + 1
         _      -> cost + 1
 
 calcCost :: Q.Seq Location -> Location -> Int
 calcCost path target =
   let
-    roughCost = Q.takeWhileL (\x -> x /= target) path
+    roughCost = Q.takeWhileL (\x -> x /= target) (Q.reverse path)
     realCost = walkCost roughCost
   in
     realCost
@@ -107,8 +107,13 @@ partTwo = do
       ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) mempty) x) parsed
 
   let distances = fmap calcDistance (S.toList intersected)
-  let costl = S.toList $ S.map (calcCost lSeq) intersected
+      costl = S.toList $ S.map (calcCost lSeq) intersected
       costr = S.toList $ S.map (calcCost rSeq) intersected
-  print $ minimum $ map (\(a,b) -> a + b) $ zip costl costr
+
+  print "hey"
+  print $ intersected
+  print $ costl
+  print $ costr
+  print $ map (\(a,b) -> a + b) $ zip costl costr
 
   pure ()
