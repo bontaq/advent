@@ -32,7 +32,7 @@ pairs :: Parser [(Direction, Distance)]
 pairs = many pair
 
 rev :: Integer -> [Integer] -> [Integer]
-rev 0 bs = 0 : bs
+rev 0 bs = bs
 rev a bs = a : rev (a - 1) bs
 
 walk :: [(Direction, Distance)] -> Location -> S.Set Location -> S.Set Location
@@ -82,18 +82,21 @@ walkSeq _ _ locs        = locs
 
 
 walkCost :: Q.Seq Location -> Int
-walkCost locs = foldl realCost 0 locs
-  where
-    realCost item cost | trace (show item <> " " <> show cost) False = undefined
-    realCost cost item =
-      case Q.elemIndexL item locs of
-        Just i -> i + 1
-        _      -> cost + 1
+walkCost = length
+-- walkCost :: Q.Seq Location -> Int
+-- walkCost locs = foldl realCost [] locs
+--   where
+--     -- realCost item cost | trace (show item <> " " <> show cost) False = undefined
+--     realCost visited item =
+--       case Q.elemIndexL item locs of
+--         Just i -> i
+--         _      -> cost + 1
 
 calcCost :: Q.Seq Location -> Location -> Int
+calcCost path target | trace (show target) False = undefined
 calcCost path target =
   let
-    roughCost = Q.takeWhileL (\x -> x /= target) (Q.reverse path)
+    roughCost = Q.takeWhileR (\x -> x /= target) (path)
     realCost = walkCost roughCost
   in
     realCost
@@ -104,14 +107,11 @@ partTwo = do
   let parsed = fmap (parseString pairs mempty) (lines f)
       ((Success l):(Success r):_) = fmap (\x -> fmap (\ds -> walk ds (0, 0) mempty) x) parsed
       intersected = S.intersection l r
-      ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) mempty) x) parsed
+      ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) $ Q.singleton (0, 0)) x) parsed
 
-  let distances = fmap calcDistance (S.toList intersected)
-      costl = S.toList $ S.map (calcCost lSeq) intersected
-      costr = S.toList $ S.map (calcCost rSeq) intersected
+  let costl = fmap (calcCost lSeq) $ S.toList intersected
+      costr = fmap (calcCost rSeq) $ S.toList intersected
 
-  print "hey"
-  print $ intersected
   print $ costl
   print $ costr
   print $ map (\(a,b) -> a + b) $ zip costl costr
