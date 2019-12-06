@@ -9,6 +9,7 @@ import Text.Trifecta.Result
 import qualified Data.Set as S
 import qualified Data.Sequence as Q
 import Debug.Trace
+import Control.Parallel.Strategies
 
 data Direction = Right | Left | Up | Down
                  deriving Show
@@ -82,15 +83,12 @@ walkSeq _ _ locs        = locs
 
 
 walkCost :: Q.Seq Location -> Int
-walkCost = length
--- walkCost :: Q.Seq Location -> Int
--- walkCost locs = foldl realCost [] locs
---   where
---     -- realCost item cost | trace (show item <> " " <> show cost) False = undefined
---     realCost visited item =
---       case Q.elemIndexL item locs of
---         Just i -> i
---         _      -> cost + 1
+walkCost locs = length $ foldl totalCost mempty locs
+  where
+    totalCost locs' loc' =
+      case Q.elemIndexL loc' locs' of
+        Just _ -> Q.takeWhileL (\x -> x /= loc') locs'
+        _      -> locs' Q.|> loc'
 
 calcCost :: Q.Seq Location -> Location -> Int
 calcCost path target | trace (show target) False = undefined
@@ -103,14 +101,14 @@ calcCost path target =
 
 partTwo :: IO ()
 partTwo = do
-  f <- readFile "./src/DayThree/data2.txt"
+  f <- readFile "./src/DayThree/data.txt"
   let parsed = fmap (parseString pairs mempty) (lines f)
       ((Success l):(Success r):_) = fmap (\x -> fmap (\ds -> walk ds (0, 0) mempty) x) parsed
       intersected = S.intersection l r
       ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) $ Q.singleton (0, 0)) x) parsed
 
-  let costl = fmap (calcCost lSeq) $ S.toList intersected
-      costr = fmap (calcCost rSeq) $ S.toList intersected
+  let costl = parMap rseq (calcCost lSeq) $ S.toList intersected
+      costr = parMap rseq (calcCost rSeq) $ S.toList intersected
 
   print $ costl
   print $ costr

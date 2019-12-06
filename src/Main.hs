@@ -7,5 +7,5 @@ import qualified DayThree.Puzzle as DayThree
 main :: IO ()
 main = do
   -- DayTwo.partTwo
-  res <- DayThree.partOne
+  res <- DayThree.partTwo
   print res
