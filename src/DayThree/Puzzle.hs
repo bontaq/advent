@@ -6,10 +6,10 @@ import Text.Parser.Token (token, integer)
 import Text.Parser.Char (char, oneOf)
 import Text.Trifecta.Parser (Parser, parseFromFile, parseString)
 import Text.Trifecta.Result
-import qualified Data.Set as S
-import qualified Data.Sequence as Q
+import qualified Data.Set        as S
+import qualified Data.Sequence   as Q
+import qualified Data.Map.Strict as M
 import Debug.Trace
-import Control.Parallel.Strategies
 
 data Direction = Right | Left | Up | Down
                  deriving Show
@@ -87,7 +87,7 @@ walkCost locs = length $ foldl totalCost mempty locs
   where
     totalCost locs' loc' =
       case Q.elemIndexL loc' locs' of
-        Just _ -> Q.takeWhileL (\x -> x /= loc') locs'
+        Just _ -> Q.takeWhileR (\x -> x /= loc') locs'
         _      -> locs' Q.|> loc'
 
 calcCost :: Q.Seq Location -> Location -> Int
@@ -99,6 +99,13 @@ calcCost path target =
   in
     realCost
 
+oneShot :: Q.Seq Location -> M.Map Location Int -> [Location] -> M.Map Location Int
+oneShot _ _ [] = mempty
+oneShot locs visited (l:ls) =
+  let price = length visited
+      rest = Q.drop price locs
+  in (price, l) : oneShot rest ls
+
 partTwo :: IO ()
 partTwo = do
   f <- readFile "./src/DayThree/data.txt"
@@ -107,11 +114,12 @@ partTwo = do
       intersected = S.intersection l r
       ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) $ Q.singleton (0, 0)) x) parsed
 
-  let costl = parMap rseq (calcCost lSeq) $ S.toList intersected
-      costr = parMap rseq (calcCost rSeq) $ S.toList intersected
+  let costl = (oneShot lSeq mempty) $ S.toList intersected
+      costr = (oneShot rSeq mempty) $ S.toList intersected
 
-  print $ costl
-  print $ costr
-  print $ map (\(a,b) -> a + b) $ zip costl costr
+  -- print lSeq
+  -- print $ costl
+  -- print $ costr
+  -- print $ map (\(a,b) -> a + b) $ zip costl costr
 
   pure ()
