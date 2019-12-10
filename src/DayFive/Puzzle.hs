@@ -64,26 +64,74 @@ runProgram offset program io =
       99 -> (program, io)
       _  -> run
         where run = case op of
+                -- addition
                 1 ->
                   let (m1:m2:_) = modes
                       v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
                       v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
                   in
                     runProgram (offset + 4) (program // [(store, (+) v0 v1)]) io
+
+                -- multiply
                 2 ->
                   let (m1:m2:_) = modes
                       v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
                       v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
                   in
                     runProgram (offset + 4) (program // [(store, (*) v0 v1)]) io
+
+                -- store input
                 3 ->
                   let ((i:is), out) = io
                   in runProgram (offset + 2) (program // [(program ! (offset + 1), i)]) (is, out)
+
+                -- output
                 4 ->
                   let (i, o) = io
                       (m1:m2:_) = modes
                       v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
                   in runProgram (offset + 2) program (i, v0 : o)
+
+                -- jump if true
+                5 ->
+                  let (m1:m2:_) = modes
+                      v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
+                      v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
+                  in
+                    if v0 /= 0
+                    then runProgram v1 program io
+                    else runProgram (offset + 3) program io
+
+                -- jump if false
+                6 ->
+                  let (m1:m2:_) = modes
+                      v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
+                      v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
+                  in
+                    if v0 == 0
+                    then runProgram v1 program io
+                    else runProgram (offset + 3) program io
+
+                -- less than
+                7 ->
+                  let (m1:m2:_) = modes
+                      v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
+                      v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
+                  in
+                    if v0 < v1
+                    then runProgram (offset + 4) (program // [(store, 1)]) io
+                    else runProgram (offset + 4) (program // [(store, 0)]) io
+
+                -- equals
+                8 ->
+                  let (m1:m2:_) = modes
+                      v0 = if m2 == I then program ! (offset + 1) else program ! (program ! (offset + 1))
+                      v1 = if m1 == I then program ! (offset + 2) else program ! (program ! (offset + 2))
+                  in
+                    if v0 == v1
+                    then runProgram (offset + 4) (program // [(store, 1)]) io
+                    else runProgram (offset + 4) (program // [(store, 0)]) io
+
                 e -> error $ show offset <> " " -- <> show program
 
 -- partOne :: IO ()
@@ -93,12 +141,6 @@ partOne = do
     parsed = parseString numbers mempty f
     -- fixed = fmap (\x -> fromList ((take 2000 (repeat 0)) <> x <> (take 2000 (repeat 0)))) parsed
     fixed = fmap (\x -> fromList ( x )) parsed
-    ran = fmap (\x -> runProgram 0 x ([1], [])) fixed
-
-  -- ran <- fmap (runProgram 0) parsed
-
-  -- parsed >>= \x -> pure $ (runProgram 0) (fromList x) ([1], [])
+    ran = fmap (\x -> runProgram 0 x ([5], [])) fixed
 
   print ran
-
-  -- pure ()
