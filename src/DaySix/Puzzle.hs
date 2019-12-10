@@ -16,8 +16,17 @@ pair = do
 pairs :: Parser [(String, String)]
 pairs = many pair
 
-
+strand :: [(String, String)] -> [[(String, String)]]
+strand connections = findCons <$> connections
+  where
+    findCons (planetA, planetB) =
+      let match = filter (\(a,b) -> planetB == a) connections
+      in case match of
+        [] -> []
+        _  -> undefined
 
 partOne = do
   parsed <- parseFromFile pairs "./src/DaySix/data.txt"
-  print parsed
+  let strands = strand <$> parsed
+  print strands
+  print $ length $ concat $ concat strands
