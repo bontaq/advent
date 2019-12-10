@@ -1,0 +1,23 @@
+module DaySix.Puzzle where
+
+import Text.Parser.Combinators (many, try, optional)
+import Text.Parser.Token (token, integer)
+import Text.Parser.Char (char, letter, newline)
+import Text.Trifecta.Parser (Parser, parseFromFile)
+
+pair :: Parser (String, String)
+pair = do
+  fromPlanet <- many letter
+  _ <- char ')'
+  toPlanet <- many letter
+  _ <- optional newline
+  pure (fromPlanet, toPlanet)
+
+pairs :: Parser [(String, String)]
+pairs = many pair
+
+
+
+partOne = do
+  parsed <- parseFromFile pairs "./src/DaySix/data.txt"
+  print parsed
