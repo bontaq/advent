@@ -4,6 +4,7 @@ import Text.Parser.Combinators (many, try, optional, choice)
 import Text.Parser.Token (token, integer)
 import Text.Parser.Char (char, letter, newline, digit)
 import Text.Trifecta.Parser (Parser, parseFromFile)
+import Data.Maybe (isJust, fromJust)
 
 pair :: Parser (String, String)
 pair = do
@@ -36,13 +37,37 @@ findStart s = head . filter (\(a,b) -> b == s)
 data Orbit = Planet (String, String) [Orbit]
              deriving Show
 
-findMatch :: Orbit -> Orbit -> Maybe (String, String)
-findMatch (Planet a orbits) (Planet b orbits') =
+findMatchInner :: (String, String) -> Orbit -> Maybe Orbit
+findMatchInner target p@(Planet b orbits) =
   let
-    match = a == b
+    match = target == b
   in
-    if a == b then Just a
-    else undefined
+    case match of
+      True  -> Just p
+      False ->
+        let
+          results = fmap (findMatchInner target) orbits
+          filtered = filter isJust results
+        in
+          case length filtered of
+            0 -> Nothing
+            1 -> head filtered
+
+findMatch :: Orbit -> Orbit -> Maybe (String, String)
+findMatch (Planet a orbits) orbitB@(Planet b orbits') =
+  let
+    r = findMatchInner a orbitB
+  in
+    case r of
+      Just _  -> Just a
+      Nothing ->
+        let
+          results = fmap (flip findMatch orbitB) orbits
+          filtered = filter isJust results
+        in
+          case length filtered of
+            0 -> Nothing
+            1 -> head filtered
 
 strand' :: String -> [(String, String)] -> Orbit
 strand' start connections = findCons $ findStart start connections
@@ -53,12 +78,28 @@ strand' start connections = findCons $ findStart start connections
         [] -> Planet (planetA, planetB) []
         _  -> Planet (planetA, planetB) (findCons <$> match)
 
+determineLength :: Int -> (String, String) -> Orbit -> Int
+determineLength count target p@(Planet b orbits) =
+  let
+    match = target == b
+  in
+    case match of
+      True  -> count
+      False ->
+        let
+          results = fmap (determineLength (count + 1) target) orbits
+          filtered = sum results
+        in
+          case filtered of
+            0 -> 0
+            count' -> count'
+
 partTwo = do
-  parsed <- parseFromFile pairs "./src/DaySix/smallData.txt"
+  parsed <- parseFromFile pairs "./src/DaySix/data.txt"
   let santa = (strand' "SAN") <$> parsed
       you   = (strand' "YOU") <$> parsed
-      match = fmap (findMatch you) santa
-      -- filter down to just the "YOU" and "SANTA" chains
-  print santa
-  print you
-  -- print $ length $ concat $ strands
+      match = fromJust $ findMatch <$> santa <*> you
+
+  print $ (determineLength 0) <$> match <*> santa
+  print $ (determineLength 0) <$> match <*> you
+  print $ findMatch <$> santa <*> you
