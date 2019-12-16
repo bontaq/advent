@@ -51,8 +51,8 @@ parseOp c =
 
 
 type Done = Bool
--- type IO = ([Int], [Int])
-type ProgramOut = (Done, Program, IO')
+type Offset = Int
+type ProgramOut = (Done, Offset, Program, IO')
 
 runProgram :: Int -> Vector Int -> ([Int], [Int]) -> ProgramOut
 runProgram offset program io | trace (show  " " <> show io) False = undefined
@@ -64,7 +64,7 @@ runProgram offset program io =
     store = program ! (offset + 3)
   in
     case op of
-      99 -> (True, program, io)
+      99 -> (True, offset, program, io)
       _  -> run
         where run = case op of
                 -- addition
@@ -87,7 +87,7 @@ runProgram offset program io =
                 3 ->
                   let (ins, out) = io
                   in case length ins of
-                    0 -> (False, program, io) -- return it for continuing to run
+                    0 -> (False, offset, program, io) -- return it for continuing to run
                     _ -> let (i:is) = ins
                          in
                            runProgram (offset + 2) (program // [(program ! (offset + 1), i)]) (is, out)
@@ -148,11 +148,11 @@ type ThrusterOut = [Int]
 runVariation :: Program -> (Int, Int, Int, Int, Int) -> ([Int], ThrusterOut)
 runVariation program (a,b,c,d,e) =
   let
-    (_, _, (_, runAOut)) = runProgram 0 program ([a, 0], [])
-    (_, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
-    (_, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
-    (_, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
-    (_, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+    (_, _, _, (_, runAOut)) = runProgram 0 program ([a, 0], [])
+    (_, _, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
+    (_, _, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
+    (_, _, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
+    (_, _, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
   in
     ([a,b,c,d,e], runEOut)
 
@@ -181,18 +181,18 @@ partOne = do
 
   print $ fmap (sortBy (\(_, a) (_, b) -> compare b a)) variations
 
-runVariation' :: Program -> Int -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
-runVariation' program startSignal (a,b,c,d,e) =
+runVariation' :: Program -> Maybe [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
+runVariation' program lastRun (a,b,c,d,e) =
   let
-    (_, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
-    (_, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
-    (_, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
-    (_, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
-    (done, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+    pA@(_, _, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
+    pB@(_, _, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
+    pC@(_, _, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
+    pD@(_, _, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
+    pE@(done, _, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
   in
     if done
     then (done, [a,b,c,d,e], runEOut)
-    else runVariation' program (head runEOut) (a,b,c,d,e)
+    else runVariation' program (Just [pA, pB, pC, pD, pE]) (a,b,c,d,e)
 
 runVariations' :: Program -> [(Bool, [Int], ThrusterOut)]
 runVariations' program =
@@ -201,7 +201,7 @@ runVariations' program =
     -- filtered = filterUniq variations
     filtered = [(9,8,7,6,5)]
   in
-    fmap (runVariation' program 0) filtered
+    fmap (runVariation' program Nothing) filtered
 
 partTwo = do
   f <- readFile "./src/DaySeven/smallData.txt"
