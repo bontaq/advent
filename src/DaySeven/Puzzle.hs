@@ -6,6 +6,7 @@ import Text.Parser.Char (char)
 import Text.Trifecta.Parser (Parser, parseString)
 import Data.Vector (fromList, toList, (!), (//), Vector)
 import Data.Maybe (fromJust, fromMaybe)
+import Data.List (sortBy)
 import Control.Lens
 import Debug.Trace
 
@@ -24,7 +25,7 @@ data Mode = I | P
 mode '1' = I
 mode '0' = P
 
-parseOp c | trace (show c) False = undefined
+parseOp :: Int -> (Int, [Mode])
 parseOp c =
   let s = show c
   in case length s of
@@ -49,8 +50,12 @@ parseOp c =
     _ -> error s
 
 
-runProgram :: Int -> Vector Int -> ([Int], [Int]) -> (Vector Int, ([Int], [Int]))
-runProgram offset program io | trace (show $ show offset <> " " <> show io) False = undefined
+type Done = Bool
+-- type IO = ([Int], [Int])
+type ProgramOut = (Done, Program, IO')
+
+runProgram :: Int -> Vector Int -> ([Int], [Int]) -> ProgramOut
+runProgram offset program io | trace (show  " " <> show io) False = undefined
 runProgram offset program io =
   let
     opcode = program ! offset
@@ -59,7 +64,7 @@ runProgram offset program io =
     store = program ! (offset + 3)
   in
     case op of
-      99 -> (program, io)
+      99 -> (True, program, io)
       _  -> run
         where run = case op of
                 -- addition
@@ -80,8 +85,12 @@ runProgram offset program io =
 
                 -- store input
                 3 ->
-                  let ((i:is), out) = io
-                  in runProgram (offset + 2) (program // [(program ! (offset + 1), i)]) (is, out)
+                  let (ins, out) = io
+                  in case length ins of
+                    0 -> (False, program, io) -- return it for continuing to run
+                    _ -> let (i:is) = ins
+                         in
+                           runProgram (offset + 2) (program // [(program ! (offset + 1), i)]) (is, out)
 
                 -- output
                 4 ->
@@ -132,17 +141,72 @@ runProgram offset program io =
 
                 e -> error $ show offset <> " " -- <> show program
 
-type IO = ([Int], [Int])
-type Program = [Int]
+type IO' = ([Int], [Int])
+type Program = Vector Int
 type ThrusterOut = [Int]
 
-runVariation :: [Int] -> Program -> ThrusterOut
-runVariation (i:is) =
-  undefined
+runVariation :: Program -> (Int, Int, Int, Int, Int) -> ([Int], ThrusterOut)
+runVariation program (a,b,c,d,e) =
+  let
+    (_, _, (_, runAOut)) = runProgram 0 program ([a, 0], [])
+    (_, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
+    (_, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
+    (_, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
+    (_, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+  in
+    ([a,b,c,d,e], runEOut)
+
+filterUniq :: [(Int, Int, Int, Int, Int)] -> [(Int, Int, Int, Int, Int)]
+filterUniq = filter (not . dupe)
+  where
+    dupe (a,b,c,d,e) =
+       let
+         n x = filter (\y -> y == x) [a,b,c,d,e]
+       in
+         any (\x -> x > 1) $ fmap (length . n) [a,b,c,d,e]
+
+runVariations :: Program -> [([Int], ThrusterOut)]
+runVariations program =
+  let
+    variations = [(a,b,c,d,e) | a <- [0..4], b <- [0..4], c <- [0..4], d <- [0..4], e <- [0..4]]
+    filtered = filterUniq variations
+  in
+    fmap (runVariation program) filtered
 
 partOne = do
   f <- readFile "./src/DaySeven/data.txt"
   let
     program = parseString numbers mempty f
+    variations = fmap (runVariations . fromList) program
 
-  print program
+  print $ fmap (sortBy (\(_, a) (_, b) -> compare b a)) variations
+
+runVariation' :: Program -> Int -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
+runVariation' program startSignal (a,b,c,d,e) =
+  let
+    (_, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
+    (_, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
+    (_, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
+    (_, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
+    (done, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+  in
+    if done
+    then (done, [a,b,c,d,e], runEOut)
+    else runVariation' program (head runEOut) (a,b,c,d,e)
+
+runVariations' :: Program -> [(Bool, [Int], ThrusterOut)]
+runVariations' program =
+  let
+    -- variations = [(a,b,c,d,e) | a <- [5..9], b <- [5..9], c <- [5..9], d <- [5..9], e <- [5..9]]
+    -- filtered = filterUniq variations
+    filtered = [(9,8,7,6,5)]
+  in
+    fmap (runVariation' program 0) filtered
+
+partTwo = do
+  f <- readFile "./src/DaySeven/smallData.txt"
+  let
+    program = parseString numbers mempty f
+    variations = fmap (runVariations' . fromList) program
+
+  print $ fmap (sortBy (\(_, _, a) (_, _, b) -> compare b a)) variations
