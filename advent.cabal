@@ -28,6 +28,7 @@ executable advent
                      , deepseq
                      , array
                      , parallel
+                     , stm
 
   other-modules:
                 DayOne.Puzzle

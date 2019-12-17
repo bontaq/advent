@@ -90,36 +90,36 @@ walkCost locs = length $ foldl totalCost mempty locs
         Just _ -> Q.takeWhileR (\x -> x /= loc') locs'
         _      -> locs' Q.|> loc'
 
-calcCost :: Q.Seq Location -> Location -> Int
-calcCost path target | trace (show target) False = undefined
-calcCost path target =
-  let
-    roughCost = Q.takeWhileR (\x -> x /= target) (path)
-    realCost = walkCost roughCost
-  in
-    realCost
+-- calcCost :: Q.Seq Location -> Location -> Int
+-- calcCost path target | trace (show target) False = undefined
+-- calcCost path target =
+--   let
+--     roughCost = Q.takeWhileR (\x -> x /= target) (path)
+--     realCost = walkCost roughCost
+--   in
+--     realCost
 
-oneShot :: Q.Seq Location -> M.Map Location Int -> [Location] -> M.Map Location Int
-oneShot _ _ [] = mempty
-oneShot locs visited (l:ls) =
-  let price = length visited
-      rest = Q.drop price locs
-  in (price, l) : oneShot rest ls
+-- oneShot :: Q.Seq Location -> M.Map Location Int -> [Location] -> M.Map Location Int
+-- oneShot _ _ [] = mempty
+-- oneShot locs visited (l:ls) =
+--   let price = length visited
+--       rest = Q.drop price locs
+--   in (price, l) : oneShot rest ls
 
-partTwo :: IO ()
-partTwo = do
-  f <- readFile "./src/DayThree/data.txt"
-  let parsed = fmap (parseString pairs mempty) (lines f)
-      ((Success l):(Success r):_) = fmap (\x -> fmap (\ds -> walk ds (0, 0) mempty) x) parsed
-      intersected = S.intersection l r
-      ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) $ Q.singleton (0, 0)) x) parsed
+-- partTwo :: IO ()
+-- partTwo = do
+--   f <- readFile "./src/DayThree/data.txt"
+--   let parsed = fmap (parseString pairs mempty) (lines f)
+--       ((Success l):(Success r):_) = fmap (\x -> fmap (\ds -> walk ds (0, 0) mempty) x) parsed
+--       intersected = S.intersection l r
+--       ((Success lSeq):(Success rSeq):_) = fmap (\x -> fmap (\ds -> walkSeq ds (0, 0) $ Q.singleton (0, 0)) x) parsed
 
-  let costl = (oneShot lSeq mempty) $ S.toList intersected
-      costr = (oneShot rSeq mempty) $ S.toList intersected
+--   let costl = (oneShot lSeq mempty) $ S.toList intersected
+--       costr = (oneShot rSeq mempty) $ S.toList intersected
 
   -- print lSeq
   -- print $ costl
   -- print $ costr
   -- print $ map (\(a,b) -> a + b) $ zip costl costr
 
-  pure ()
+  -- pure ()

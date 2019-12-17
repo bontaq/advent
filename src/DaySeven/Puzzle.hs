@@ -8,6 +8,8 @@ import Data.Vector (fromList, toList, (!), (//), Vector)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.List (sortBy)
 import Control.Lens
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TChan
 import Debug.Trace
 
 number :: Parser Int
@@ -181,18 +183,53 @@ partOne = do
 
   print $ fmap (sortBy (\(_, a) (_, b) -> compare b a)) variations
 
-runVariation' :: Program -> Maybe [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
-runVariation' program lastRun (a,b,c,d,e) =
+runComputer :: TChan Int -> TChan Int -> Int -> ProgramOut -> STM ()
+runComputer hout hin phase (done, offset, program, io) = do
+  input <- readTChan hin
+
+  newProgram = undefined
+
+  runComputer hout hin phase program
+
+
+getStartSignal ((_, _, _, (_, s)):_) = s
+
+continueVariation :: Program -> [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
+continueVariation program lastRun (a,b,c,d,e) =
   let
-    pA@(_, _, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
-    pB@(_, _, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
-    pC@(_, _, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
-    pD@(_, _, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
-    pE@(done, _, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+    startSignal = getStartSignal lastRun
+    offsets = fmap (\(_, offset, _, _) -> offset) lastRun
+    programs = fmap (\(_, _, program, _) -> program) lastRun
+    dones = fmap (\(done, _, _, _) -> done) lastRun
+
+    pA@(d1, _, _, (_, runAOut)) = runProgram (offsets !! 0) (programs !! 0) (startSignal, [])
+    pB@(d2, _, _, (_, runBOut)) = runProgram (offsets !! 1) (programs !! 1) (runAOut, [])
+    pC@(d3, _, _, (_, runCOut)) = runProgram (offsets !! 2) (programs !! 2) (runBOut, [])
+    pD@(d4, _, _, (_, runDOut)) = runProgram (offsets !! 3) (programs !! 3) (runCOut, [])
+    pE@(d5, _, _, (_, runEOut)) = runProgram (offsets !! 4) (programs !! 4) (runDOut, [])
+
+    done = all (==True) [d1, d2, d3, d4, d5]
+    newComputers = [pA, pB, pC, pD, pE]
   in
     if done
     then (done, [a,b,c,d,e], runEOut)
-    else runVariation' program (Just [pA, pB, pC, pD, pE]) (a,b,c,d,e)
+    else continueVariation program [pA, pB, pC, pD, pE] (a,b,c,d,e)
+
+runVariation' :: Program -> Maybe [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
+runVariation' program lastRun (a,b,c,d,e) =
+  let
+    startSignal = 0
+    pA@(d1, _, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
+    pB@(d2, _, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
+    pC@(d3, _, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
+    pD@(d4, _, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
+    pE@(d5, _, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
+
+    done = d5
+  in
+    if done
+    then (done, [a,b,c,d,e], runEOut)
+    else continueVariation program [pA, pB, pC, pD, pE] (a,b,c,d,e)
 
 runVariations' :: Program -> [(Bool, [Int], ThrusterOut)]
 runVariations' program =
