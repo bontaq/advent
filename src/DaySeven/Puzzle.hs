@@ -4,11 +4,12 @@ import Text.Parser.Combinators (many, try, optional)
 import Text.Parser.Token (token, integer)
 import Text.Parser.Char (char)
 import Text.Trifecta.Parser (Parser, parseString)
+import Text.Trifecta.Result
 import Data.Vector (fromList, toList, (!), (//), Vector)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.List (sortBy)
 import Control.Lens
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TChan
 import Debug.Trace
@@ -186,13 +187,28 @@ partOne = do
 
 runComputer :: TChan Int -> TChan Int -> Int -> ProgramOut -> IO ()
 runComputer hout hin phase (done, offset, program, io) = do
-  input <- atomically $ readTChan hin
+  let (input', output') = io
 
-  let newProgram@(_, _, _, (i, o)) = runProgram offset program ([input], [])
+  realInput <- if length input' == 0 && done == False
+               then atomically $ fmap (\x -> [x]) $ readTChan hin
+               else if length input' == 0
+                       then pure []
+                       else pure input'
 
-  atomically $ writeTChan hout (head o)
+  let newProgram@(done', offset', program', (i, o)) = runProgram offset program (realInput, [])
 
-  runComputer hout hin phase newProgram
+  case length o of
+    0 -> do -- runComputer hout hin phase newProgram
+      if not done'
+      then runComputer hout hin phase newProgram
+      else print newProgram
+          --atomically $ writeTChan hout (head o)
+    1 -> do
+      atomically $ writeTChan hout (head o)
+      runComputer hout hin phase newProgram
+    _ -> error "fuck"
+
+  -- runComputer hout hin phase newProgram
 
 
 -- getStartSignal ((_, _, _, (_, s)):_) = s
@@ -247,25 +263,36 @@ runVariations' program = do
     -- filtered = filterUniq variations
     -- filtered = [(9,8,7,6,5)]
 
-  forkIO $ runComputer a b 0 (False, 0, program, ([], []))
-  forkIO $ runComputer b c 0 (False, 0, program, ([], []))
-  forkIO $ runComputer c d 0 (False, 0, program, ([], []))
-  forkIO $ runComputer d e 0 (False, 0, program, ([], []))
-  forkIO $ runComputer e a 0 (False, 0, program, ([], []))
+  forkIO $ runComputer b a 0 (False, 0, program, ([9, 0], []))
+  forkIO $ runComputer c b 0 (False, 0, program, ([7], []))
+  forkIO $ runComputer d c 0 (False, 0, program, ([8], []))
+  forkIO $ runComputer e d 0 (False, 0, program, ([5], []))
+  forkIO $ runComputer a e 0 (False, 0, program, ([6], []))
 
-  atomically $ writeTChan a 9
+  -- atomically $ writeTChan a 9
+  -- atomically $ writeTChan b 7
+  -- atomically $ writeTChan c 8
+  -- atomically $ writeTChan d 5
+  -- atomically $ writeTChan e 6
+
+  -- atomically $ writeTChan b 0
+
+  threadDelay(1000000000)
 
   pure ()
   -- in
   --   fmap (runVariation' program Nothing) filtered
 
+fromResult (Success a) = a
+
 partTwo = do
   f <- readFile "./src/DaySeven/smallData.txt"
   let
-    program = parseString numbers mempty f
-    variations = fmap (runVariations' . fromList) program
+    program = fromResult $ parseString numbers mempty f
 
-  v <- variations
+  variations <- (runVariations' . fromList) program
+
+  -- v <- variations
 
   -- print $ fmap (sortBy (\(_, _, a) (_, _, b) -> compare b a)) variations
 
