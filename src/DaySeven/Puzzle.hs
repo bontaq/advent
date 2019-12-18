@@ -10,6 +10,7 @@ import Data.Maybe (fromJust, fromMaybe)
 import Data.List (sortBy)
 import Control.Lens
 import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.MVar
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TChan
 import Debug.Trace
@@ -59,7 +60,7 @@ type Offset = Int
 type ProgramOut = (Done, Offset, Program, IO')
 
 runProgram :: Int -> Vector Int -> ([Int], [Int]) -> ProgramOut
-runProgram offset program io | trace (show  " " <> show io) False = undefined
+-- runProgram offset program io | trace (show  " " <> show io) False = undefined
 runProgram offset program io =
   let
     opcode = program ! offset
@@ -195,14 +196,14 @@ runComputer hout hin phase (done, offset, program, io) = do
                        then pure []
                        else pure input'
 
-  let newProgram@(done', offset', program', (i, o)) = runProgram offset program (realInput, [])
+  let newProgram@(done', offset', program', (i, o)) =
+        runProgram offset program (realInput, [])
 
   case length o of
     0 -> do -- runComputer hout hin phase newProgram
       if not done'
       then runComputer hout hin phase newProgram
-      else print newProgram
-          --atomically $ writeTChan hout (head o)
+      else pure ()
     1 -> do
       atomically $ writeTChan hout (head o)
       runComputer hout hin phase newProgram
@@ -210,90 +211,63 @@ runComputer hout hin phase (done, offset, program, io) = do
 
   -- runComputer hout hin phase newProgram
 
+runLastComputer :: MVar (IO') -> TChan Int -> TChan Int -> Int -> ProgramOut -> IO ()
+runLastComputer fin hout hin phase (done, offset, program, io) = do
+  let (input', output') = io
 
--- getStartSignal ((_, _, _, (_, s)):_) = s
+  realInput <- if length input' == 0 && done == False
+               then atomically $ fmap (\x -> [x]) $ readTChan hin
+               else if length input' == 0
+                       then pure []
+                       else pure input'
 
--- continueVariation :: Program -> [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
--- continueVariation program lastRun (a,b,c,d,e) =
---   let
---     startSignal = getStartSignal lastRun
---     offsets = fmap (\(_, offset, _, _) -> offset) lastRun
---     programs = fmap (\(_, _, program, _) -> program) lastRun
---     dones = fmap (\(done, _, _, _) -> done) lastRun
+  let newProgram@(done', offset', program', (i, o)) =
+        runProgram offset program (realInput, [])
 
---     pA@(d1, _, _, (_, runAOut)) = runProgram (offsets !! 0) (programs !! 0) (startSignal, [])
---     pB@(d2, _, _, (_, runBOut)) = runProgram (offsets !! 1) (programs !! 1) (runAOut, [])
---     pC@(d3, _, _, (_, runCOut)) = runProgram (offsets !! 2) (programs !! 2) (runBOut, [])
---     pD@(d4, _, _, (_, runDOut)) = runProgram (offsets !! 3) (programs !! 3) (runCOut, [])
---     pE@(d5, _, _, (_, runEOut)) = runProgram (offsets !! 4) (programs !! 4) (runDOut, [])
+  case length o of
+    0 -> do -- runComputer hout hin phase newProgram
+      if not done'
+      then runLastComputer fin hout hin phase newProgram
+      else putMVar fin io
+    1 -> do
+      atomically $ writeTChan hout (head o)
+      runLastComputer fin hout hin phase newProgram
+    _ -> error "fuck"
 
---     done = all (==True) [d1, d2, d3, d4, d5]
---     newComputers = [pA, pB, pC, pD, pE]
---   in
---     if done
---     then (done, [a,b,c,d,e], runEOut)
---     else continueVariation program [pA, pB, pC, pD, pE] (a,b,c,d,e)
-
--- runVariation' :: Program -> Maybe [ProgramOut] -> (Int, Int, Int, Int, Int) -> (Bool, [Int], ThrusterOut)
--- runVariation' program lastRun (a,b,c,d,e) =
---   let
---     startSignal = 0
---     pA@(d1, _, _, (_, runAOut)) = runProgram 0 program ([a, startSignal], [])
---     pB@(d2, _, _, (_, runBOut)) = runProgram 0 program ([b, head runAOut], [])
---     pC@(d3, _, _, (_, runCOut)) = runProgram 0 program ([c, head runBOut], [])
---     pD@(d4, _, _, (_, runDOut)) = runProgram 0 program ([d, head runCOut], [])
---     pE@(d5, _, _, (_, runEOut)) = runProgram 0 program ([e, head runDOut], [])
-
---     done = d5
---   in
---     if done
---     then (done, [a,b,c,d,e], runEOut)
---     else continueVariation program [pA, pB, pC, pD, pE] (a,b,c,d,e)
-
--- runVariations' :: Program -> [(Bool, [Int], ThrusterOut)]
-runVariations' :: Program -> IO ()
-runVariations' program = do
-  -- let
+runVariations' :: Program -> (Int, Int, Int, Int, Int) -> IO (IO')
+runVariations' program (a', b', c', d', e') = do
   a <- atomically newTChan
   b <- atomically newTChan
   c <- atomically newTChan
   d <- atomically newTChan
   e <- atomically newTChan
-    -- variations = [(a,b,c,d,e) | a <- [5..9], b <- [5..9], c <- [5..9], d <- [5..9], e <- [5..9]]
-    -- filtered = filterUniq variations
-    -- filtered = [(9,8,7,6,5)]
 
-  forkIO $ runComputer b a 0 (False, 0, program, ([9, 0], []))
-  forkIO $ runComputer c b 0 (False, 0, program, ([7], []))
-  forkIO $ runComputer d c 0 (False, 0, program, ([8], []))
-  forkIO $ runComputer e d 0 (False, 0, program, ([5], []))
-  forkIO $ runComputer a e 0 (False, 0, program, ([6], []))
+  finished <- newEmptyMVar
 
-  -- atomically $ writeTChan a 9
-  -- atomically $ writeTChan b 7
-  -- atomically $ writeTChan c 8
-  -- atomically $ writeTChan d 5
-  -- atomically $ writeTChan e 6
+  forkIO $ runComputer b a 0 (False, 0, program, ([a', 0], []))
+  forkIO $ runComputer c b 0 (False, 0, program, ([b'], []))
+  forkIO $ runComputer d c 0 (False, 0, program, ([c'], []))
+  forkIO $ runComputer e d 0 (False, 0, program, ([d'], []))
 
-  -- atomically $ writeTChan b 0
+  forkIO $ runLastComputer finished a e 0 (False, 0, program, ([e'], []))
 
-  threadDelay(1000000000)
-
-  pure ()
-  -- in
-  --   fmap (runVariation' program Nothing) filtered
+  pout <- takeMVar finished
+  pure pout
 
 fromResult (Success a) = a
 
 partTwo = do
-  f <- readFile "./src/DaySeven/smallData.txt"
+  f <- readFile "./src/DaySeven/data.txt"
   let
+    variations = [(a,b,c,d,e) | a <- [5..9], b <- [5..9], c <- [5..9], d <- [5..9], e <- [5..9]]
+    filtered = filterUniq variations
     program = fromResult $ parseString numbers mempty f
 
-  variations <- (runVariations' . fromList) program
+  variations <- mapM (runVariations' (fromList program)) filtered
+  -- print variations
 
   -- v <- variations
 
-  -- print $ fmap (sortBy (\(_, _, a) (_, _, b) -> compare b a)) variations
+  print $ take 10 $ (sortBy (\(_, (a:_)) (_, (b:_)) -> compare b a)) variations
 
   pure ()
