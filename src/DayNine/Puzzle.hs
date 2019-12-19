@@ -87,7 +87,7 @@ getWrite m program offset adjust relative = case m of
   _ -> program ! (offset + adjust)
 
 runProgram :: Int -> Int -> Vector Int -> ([Int], [Int]) -> ProgramOut
-runProgram offset relative program io | trace (show $ (show $ program ! offset) <> "::" <> show relative) False = undefined
+-- runProgram offset relative program io | trace (show $ (show $ program ! offset) <> "::" <> show relative) False = undefined
 runProgram offset relative program io =
   let
     opcode = program ! offset
@@ -208,5 +208,15 @@ partOne = do
     -- fixed = fmap (\x -> fromList ((take 2000 (repeat 0)) <> x <> (take 2000 (repeat 0)))) parsed
     fixed = fmap (\x -> fromList ( x <> (take 1000 (repeat 0)) )) parsed
     ran = fmap (\x -> runProgram 0 0 x ([1], [])) fixed
+
+  print ran
+
+partTwo = do
+  f <- readFile "./src/DayNine/data.txt"
+  let
+    parsed = parseString numbers mempty f
+    -- fixed = fmap (\x -> fromList ((take 2000 (repeat 0)) <> x <> (take 2000 (repeat 0)))) parsed
+    fixed = fmap (\x -> fromList ( x <> (take 1000 (repeat 0)) )) parsed
+    ran = fmap (\x -> runProgram 0 0 x ([2], [])) fixed
 
   print ran
