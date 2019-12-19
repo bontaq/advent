@@ -54,9 +54,9 @@ parseOp c =
     5 ->
       let
         stupid = take ((length s) - 2) s
-        a = fromMaybe '0' $ stupid ^? element 0
-        b = fromMaybe '0' $ stupid ^? element 1
-        c = fromMaybe '0' $ stupid ^? element 2
+        c = fromMaybe '0' $ stupid ^? element 0
+        a = fromMaybe '0' $ stupid ^? element 1
+        b = fromMaybe '0' $ stupid ^? element 2
         z = drop ((length s) - 2) s
       in
         ((read z :: Int), [mode a, mode b, mode c])
