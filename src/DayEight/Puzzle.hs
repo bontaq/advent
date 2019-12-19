@@ -61,3 +61,33 @@ partOne = do
   print $ calced
 
   pure ()
+
+group' :: [[a]] -> [[a]]
+group' arr =
+  let
+    range = [0..length arr - 1]
+    width = [0..(length $ head arr) - 1]
+    values = fmap (\y -> fmap (\x -> (arr !! x) !! y) range) width
+  in
+    values
+
+determineColor :: [Int] -> Int
+determineColor xs = foldr color 2 (reverse xs)
+  where
+    color a 2 = a
+    color _ 0 = 0
+    color _ 1 = 1
+
+partTwo :: IO ()
+partTwo = do
+  f <- readFile "./src/DayEight/data.txt"
+  let parsed = parse $ filterReturns f
+      layerized = layerize 25 6 parsed
+      combined = fmap concat layerized
+      grouped = group' combined
+      colorized = fmap determineColor grouped
+      grouped' = head $ layerize 25 6 colorized
+
+  mapM (\x -> print x) grouped'
+
+  pure ()
