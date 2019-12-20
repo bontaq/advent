@@ -13,6 +13,11 @@ instance Show Object where
   show Asteroid = "#"
   show Empty    = "."
 
+type X = Int
+type Y = Int
+
+type Field = [[(X, Y, Object)]]
+
 objectize '.' = Empty
 objectize '#' = Asteroid
 
@@ -28,7 +33,24 @@ parseField = many parseObjects
 pprint :: [[Object]] -> IO [()]
 pprint objects = mapM (putStrLn . show) objects
 
+withCoords :: [[Object]] -> [[(X, Y, Object)]]
+withCoords field =
+  fmap (\(y, row) ->
+         fmap (\(x, item) -> (x, y, item))
+         (zip [0..] row))
+  (zip [0..] field)
+
 fromResult (Success a) = a
+
+-- each round, remove stars that are no longer visible
+
+-- 1. neighbors 0 -> 1 -> 2 expanding circle
+neighbors :: Int -> (X, Y, Object) -> Field -> [(X, Y, Object)]
+neighbors = undefined
+
+-- 2. calc baseStar toStar equation and predict it out
+-- 3. replace any stars in path with Empty
+-- 4. filter & sum remaining
 
 partOne :: IO ()
 partOne = do
@@ -36,6 +58,7 @@ partOne = do
   let
     parsed = fromResult $ parseString parseField mempty f
 
-  pprint parsed
+  -- pprint parsed
+  print $ withCoords parsed
 
   pure ()
