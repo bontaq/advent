@@ -36,7 +36,9 @@ partOne = do
 partTwo :: IO ()
 partTwo = do
   nums <- fromJust <$> parseFromFile numbers "./src/DayOne/data.txt"
-  print [a * b * c | a <- nums
-                   , b <- nums
-                   , c <- nums
-                   , a + b + c == 2020 ]
+  print
+    $ take 1 -- it's performance optimized now
+    $ [a * b * c | a <- nums
+                 , b <- nums
+                 , c <- nums
+                 , a + b + c == 2020 ]
