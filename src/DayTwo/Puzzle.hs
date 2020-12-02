@@ -17,12 +17,12 @@ type Row = (MinOccur, MaxOccur, Character, Password)
 
 parseRow :: Parser Row
 parseRow = do
-  minOccur <- token integer
-  _ <- char '-'
-  maxOccur <- token integer
+  minOccur  <- token integer
+  _         <- char '-'
+  maxOccur  <- token integer
   character <- letter
-  _ <- string ": "
-  password <- many letter
+  _         <- string ": "
+  password  <- many letter
 
   pure ( fromInteger minOccur
        , fromInteger maxOccur
