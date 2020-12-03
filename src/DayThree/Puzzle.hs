@@ -22,7 +22,7 @@ collect []              _     = []
 collect ((x, y):points) field =
   case field ^? element x . element y of
     Just char -> char : collect points field
-    Nothing   -> []
+    Nothing   -> []  -- we ran off the field
 
 treeFilter :: [Char] -> [Char]
 treeFilter = filter (== '#')
