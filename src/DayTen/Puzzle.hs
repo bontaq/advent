@@ -30,7 +30,7 @@ parseObjects = do
 parseField :: Parser [[Object]]
 parseField = many parseObjects
 
-pprint :: [[Object]] -> IO [()]
+pprint :: Show a => [[a]] -> IO [()]
 pprint objects = mapM (putStrLn . show) objects
 
 withCoords :: [[Object]] -> [[(X, Y, Object)]]
@@ -46,7 +46,7 @@ fromResult (Success a) = a
 
 -- 1. neighbors 0 -> 1 -> 2 expanding circle
 neighbors :: Int -> (X, Y, Object) -> Field -> [(X, Y, Object)]
-neighbors = undefined
+neighbors r (x, y, _) field = undefined
 
 -- 2. calc baseStar toStar equation and predict it out
 -- 3. replace any stars in path with Empty
@@ -59,6 +59,6 @@ partOne = do
     parsed = fromResult $ parseString parseField mempty f
 
   -- pprint parsed
-  print $ withCoords parsed
+  pprint $ withCoords parsed
 
   pure ()

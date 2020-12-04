@@ -224,8 +224,8 @@ getNewLocation x y direction =
   case direction of
     Left'  -> (x - 1, y)
     Right' -> (x + 1, y)
-    Up     -> (x, y + 1)
-    Down   -> (x, y - 1)
+    Up     -> (x, y - 1)
+    Down   -> (x, y + 1)
 
 updateField x y newColor field =
   let
@@ -281,7 +281,7 @@ runSimulation robot paintedField field program =
     case length oldInput of
       0 ->
         case done' of
-          True  -> paintedField
+          True  -> field
           False -> runSimulation (newX, newY, newDirection) paintedField' newField ranProgram
       1 -> error "fuck"
 
@@ -294,6 +294,8 @@ partOne = do
     -- fixed = fmap (\x -> fromList ((take 2000 (repeat 0)) <> x <> (take 2000 (repeat 0)))) parsed
     fixed = fmap (\x -> fromList ( x <> (take 2000 (repeat 0)))) parsed
 
+
+    newField = (element (30 + (rowWidth * 100)) .~ '#') field
     ran = fmap (\x -> runSimulation (30, 100, Up) field field (False, 0, 0, x, ([], []))) fixed
     -- ran = fmap (\x -> runProgram 0 0 x ([], [])) fixed
 
