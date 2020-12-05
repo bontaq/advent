@@ -33,24 +33,16 @@ partOne = do
   passes <- lines <$> readFile "./src/DayFive/data.txt"
   print $ maximum $ fmap findSeat passes
 
-findSeat' directions =
-  let (rowDirections, columnDirections) = splitAt 7 directions
-      row = findRow rowDirections rows
-      column = findColumn columnDirections columns
-  in (row, column)
-
 toSeatId (row, column) = (row * 8) + column
 
 allSeats = [ toSeatId (a, b) | a <- rows
-                             , b <- columns
-                             , a /= 0
-                               -- very weird
-                             , (a >= 122) == False ]
+                             , b <- columns ]
 
+-- just do the set difference :shrugcity:
 findMySeat seats = allSeats \\ seats
 
 partTwo = do
   passes <- lines <$> readFile "./src/DayFive/data.txt"
-  let seats = fmap findSeat' passes
-      seatIds = fmap toSeatId seats
-  print $ findMySeat seatIds
+  -- I just looked at the result to see the one in the middle
+  -- dunno what the programmatic way to do that is :think:
+  print $ findMySeat $ fmap findSeat passes
