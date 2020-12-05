@@ -33,9 +33,6 @@ partOne = do
   passes <- lines <$> readFile "./src/DayFive/data.txt"
   print $ maximum $ fmap findSeat passes
 
-checkSeat targetSeat =
-  find (\seat -> (seat + 2) == targetSeat)
-
 findSeat' directions =
   let (rowDirections, columnDirections) = splitAt 7 directions
       row = findRow rowDirections rows
@@ -43,8 +40,6 @@ findSeat' directions =
   in (row, column)
 
 toSeatId (row, column) = (row * 8) + column
-
-removeFrontBack = filter (\(row, _) -> row /= 0 && row /= 127)
 
 allSeats = [ toSeatId (a, b) | a <- rows
                              , b <- columns
