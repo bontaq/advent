@@ -1,12 +1,13 @@
 module DayThree.Puzzle where
 
 import GHC.Base (divInt)
+import Debug.Trace
 
 -----------
 -- Parse --
 -----------
 
-fileLocation = "./src/DayThree/testData.txt"
+fileLocation = "./src/DayThree/data.txt"
 
 toDigits :: [Char] -> [Int]
 toDigits = fmap (\char -> read [char])
@@ -21,7 +22,12 @@ parse = fmap toDigits . lines <$> readFile fileLocation
 combine a b = plus <$> zip a b
   where plus (a,b) = a + b
 
-oneOrZero size value = if value < (size `divInt` 2) then 0 else 1
+convert :: Int -> Double
+convert = fromIntegral
+
+oneOrZero size value = if convert value < (convert size / 2) then 0 else 1
+
+zeroOrOne size value = if value <= (size `divInt` 2) then 0 else 1
 
 gamma (x:xs) =
   let totals = foldr combine x xs
@@ -46,3 +52,19 @@ partOne = do
 --------------
 -- Part Two --
 --------------
+
+oxygenRating _       [x] = x
+oxygenRating position xs =
+  let mostCommon = gamma xs !! position
+      remaining = filter (\x -> (x !! position) == mostCommon) xs
+  in oxygenRating (position + 1) remaining
+
+co2Rating _       [x] = x
+co2Rating position xs =
+  let mostCommon = epsilon xs !! position
+      remaining = filter (\x -> (x !! position) == mostCommon) xs
+  in co2Rating (position + 1) remaining
+
+partTwo = do
+  numbers <- parse
+  print $ binaryToDecimal <$> [oxygenRating 0 numbers, co2Rating 0 numbers]
