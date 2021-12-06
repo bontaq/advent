@@ -29,4 +29,6 @@ executable advent
                      , array
                      , parallel
                      , stm
+                     , recursion-schemes
+                     , split
                      -- , holmes
