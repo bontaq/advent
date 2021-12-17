@@ -22,3 +22,5 @@ cradle:
       component: "advent:exe:advent"
     - path: "./src/DayTwelve/Puzzle.hs"
       component: "advent:exe:advent"
+    - path: "./src/DayThirteen/Puzzle.hs"
+      component: "advent:exe:advent"
