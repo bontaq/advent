@@ -31,4 +31,6 @@ executable advent
                      , stm
                      , recursion-schemes
                      , split
+                     , parsec
+                     , mtl
                      -- , holmes
