@@ -1,70 +1,41 @@
-module DayThree.Puzzle where
+{-# LANGUAGE FlexibleContexts #-}
+module Puzzle where
 
-import GHC.Base (divInt)
-import Debug.Trace
+import Data.List
+import Data.Maybe
 
------------
--- Parse --
------------
+file = lines <$> readFile "./src/DayThree/data.txt"
 
-fileLocation = "./src/DayThree/data.txt"
+split line = splitAt (length line `div` 2) line
 
-toDigits :: [Char] -> [Int]
-toDigits = fmap (\char -> read [char])
+scores = zip [1..] (['a'..'z'] <> ['A'..'Z'])
 
-parse = fmap toDigits . lines <$> readFile fileLocation
+getScore target =
+  fromMaybe 0 $ fst <$> find (\(score, item) -> item == target) scores
 
-
---------------
--- Part One --
---------------
-
-combine a b = plus <$> zip a b
-  where plus (a,b) = a + b
-
-convert :: Int -> Double
-convert = fromIntegral
-
-oneOrZero size value = if convert value < (convert size / 2) then 0 else 1
-
-zeroOrOne size value = if value <= (size `divInt` 2) then 0 else 1
-
-gamma (x:xs) =
-  let totals = foldr combine x xs
-      size = length (x:xs)
-  in fmap (oneOrZero size) totals
-
-epsilon = fmap opposite <$> gamma
-  where
-    opposite 1 = 0
-    opposite 0 = 1
-
-binaryToDecimal = sum . fmap combine . zip genPowers . reverse
-  where
-    genPowers = [ 2 ^ x | x <- [0..] ]
-    combine (power, value) = power * value
+shared (a, b) = nub $ a `intersect` b
 
 partOne = do
-  numbers <- parse
-  print $ binaryToDecimal <$> [gamma numbers, epsilon numbers]
+  parsed <- file
 
+  let
+    sharedItems = fmap (shared . split) parsed
+    scored = concatMap (fmap getScore) sharedItems
 
---------------
--- Part Two --
---------------
+  print (sum scored)
 
-oxygenRating _       [x] = x
-oxygenRating position xs =
-  let mostCommon = gamma xs !! position
-      remaining = filter (\x -> (x !! position) == mostCommon) xs
-  in oxygenRating (position + 1) remaining
+subGroups [] = []
+subGroups (a:b:c:rest) = [[a, b, c]] <> subGroups rest
 
-co2Rating _       [x] = x
-co2Rating position xs =
-  let mostCommon = epsilon xs !! position
-      remaining = filter (\x -> (x !! position) == mostCommon) xs
-  in co2Rating (position + 1) remaining
+shared' [a, b, c] = nub $ (a `intersect` b) `intersect` c
 
 partTwo = do
-  numbers <- parse
-  print $ binaryToDecimal <$> [oxygenRating 0 numbers, co2Rating 0 numbers]
+  parsed <- file
+
+  let
+    elfGroups = subGroups parsed
+    badges = fmap shared' elfGroups
+    scored = concatMap (fmap getScore) badges
+    -- scored = concatMap (fmap getScore) sharedItems
+
+  print (sum scored)
