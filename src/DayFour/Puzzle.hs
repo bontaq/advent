@@ -10,8 +10,7 @@ parsePart input =
 
 parseLine line =
   let parts = splitOn "," line
-  in
-    fmap parsePart parts
+  in fmap parsePart parts
 
 input = fmap parseLine . lines <$> readFile "./src/DayFour/data.txt"
 
@@ -23,7 +22,6 @@ partOne = do
   let
     contained = fmap fullyContained ranges
     containedCount = length $ filter (== True) contained
-
 
   print containedCount
 
