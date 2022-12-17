@@ -3,7 +3,6 @@
 module DaySeven.Puzzle where
 
 import Data.List
-import Data.Map
 
 testLocation = "./src/DaySeven/real.txt"
 
