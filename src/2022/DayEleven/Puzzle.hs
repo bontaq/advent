@@ -8,7 +8,7 @@ import Data.List.Split
 import Control.Lens
 import Debug.Trace
 
-location = "./src/DayEleven/real.txt"
+location = "./src/DayEleven/test.txt"
 
 data Monkey = Monkey
   { name :: Int
