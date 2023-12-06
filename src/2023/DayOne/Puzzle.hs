@@ -6,7 +6,6 @@ module DayOne.Puzzle where
 import Text.RawString.QQ (r)
 import Text.Read (readMaybe)
 import Data.Maybe (catMaybes, mapMaybe)
-import Control.Applicative (Alternative(empty))
 import Data.List.Extra
 
 test = [r|
@@ -46,8 +45,8 @@ location = "./src/2023/DayOne/data.txt"
 main = do
   input <- readFile location
 
-  let rows = collectNumbers <$> lines (prepass input)
-      digits = fmap getDigits (clean rows)
+  let rows = clean $ collectNumbers <$> lines (prepass input)
+      digits = fmap getDigits rows
       finalNumbers = fmap toFinalNumber digits
 
   print digits
