@@ -35,3 +35,5 @@ cradle:
       component: "advent:exe:advent"
     - path: "./src/2023/DayThree/Puzzle.hs"
       component: "advent:exe:advent"
+    - path: "./src/2023/DayFour/Puzzle.hs"
+      component: "advent:exe:advent"
