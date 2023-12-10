@@ -12,7 +12,8 @@ import Text.Trifecta
 import Debug.Trace
 import Data.List
 import Data.List (sortOn)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, catMaybes, mapMaybe)
+import Data.List.Extra (replace)
 
 input = [r|
 32T3K 765
@@ -63,15 +64,28 @@ onePair cards =
 
 highCard cards = length (nub cards) == 5
 
+-- 2J333
+genAlts cards =
+  if Card 'J' `elem` cards
+  then fmap (\newCard -> replace [Card 'J'] [Card newCard] cards) ranks
+  else [cards]
+
 handRank cards = fmap
   (\test -> test cards)
   [onePair, twoPair, threeOfAKind, fullHouse, fourOfAKind, fiveOfAKind]
 
-strength cards =
+strength' cards =
   let
     sorted = sort cards
     handKinds = elemIndices True (handRank sorted)
   in if null handKinds then Nothing else Just (maximum handKinds)
+
+strength :: [Card] -> Maybe Int
+strength cards =
+  let
+    alts = genAlts cards
+    options = catMaybes $ strength' <$> alts
+  in if null options then Nothing else Just (maximum options)
 
 smallCompare [] [] = EQ
 smallCompare (a:cardsA) (b:cardsB) =
@@ -116,9 +130,9 @@ partOne = do
 
   -- print result
   -- print real
-  print parsed
-  pprint ranked
-  print scored
+  -- print parsed
+  -- pprint ranked
+  -- print scored
   print total
 
 
