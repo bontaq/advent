@@ -2,7 +2,8 @@ module Main where
 
 -- import qualified DayNine.Puzzle as DayNine
 -- import qualified DayTwelve.Puzzle as DayTwelve
-import DayFour.Puzzle (partTwo)
+-- import DayFour.Puzzle (partTwo)
+import DayFive.Puzzle (partTwo)
 
 main :: IO ()
 main = do

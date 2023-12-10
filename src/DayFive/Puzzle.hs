@@ -9,6 +9,8 @@ import Control.Applicative
 import Text.Parser.Token
 import Text.Trifecta
 
+import Debug.Trace
+
 test = [r|
 seeds: 79 14 55 13
 
@@ -51,7 +53,11 @@ data Map = Map
   }
   deriving Show
 
-type Transform = [[Integer]]
+type RangeStart = Integer
+type TargetStart = Integer
+type RangeLength = Integer
+
+type Transform = [(RangeStart, TargetStart, RangeLength)]
 
 parseLine :: Parser [Integer]
 parseLine = do
@@ -59,7 +65,7 @@ parseLine = do
   newline
   pure nums
 
-parseTransform :: Parser Transform
+parseTransform :: Parser [[Integer]]
 parseTransform = do
   manyTill anyChar (char ':')
   newline
@@ -67,16 +73,74 @@ parseTransform = do
 
   pure (filter (not . null) rows)
 
+toTransform (a:b:c:[]) = (a, b, c)
+
 parseMaps :: Parser Map
 parseMaps = do
   optional newline
   string "seeds: "
   seeds <- many integer
   transforms <- some parseTransform
-  pure (Map seeds transforms)
+  pure (Map seeds (fmap toTransform <$> transforms))
+
+runTransform :: Transform -> Integer -> Integer
+-- runTransform transforms seed | trace (show seed) False = undefined
+runTransform transforms seed =
+  let
+    contained = filter (\(_, start, add) -> seed >= start && seed < (start + add)) transforms
+  in case contained of
+    [] ->
+      seed
+    [(target, start, add)] ->
+      (seed - start) + target
+    _ ->
+      error "multiple found"
+
+runTransforms :: Integer -> [Transform] -> Integer
+runTransforms = foldl (flip runTransform)
+
+run :: Result Map -> [Integer]
+run (Success map) =
+  let
+    seeds' = seeds map
+    transforms' = transforms map
+    transformed = fmap (\seed -> runTransforms seed transforms') seeds'
+  in
+    transformed
+
 
 partOne = do
+  raw <- readFile location
   let
-    result = parseString parseMaps mempty test
+    result = parseString parseMaps mempty raw
+    real = run result
 
-  print result
+  -- print result
+  print real
+  print $ minimum real
+
+location = "./src/DayFive/data.txt"
+
+toRange :: [Integer] -> [Integer]
+toRange [] = []
+toRange (a:b:rest) =
+  [a..(a + b) - 1] <> toRange rest
+
+run' :: Result Map -> [Integer]
+run' (Success map) =
+  let
+    seeds' = toRange $ seeds map
+    transforms' = transforms map
+    transformed = fmap (\seed -> runTransforms seed transforms') seeds'
+  in
+    transformed
+
+partTwo = do
+  raw <- readFile location
+  let
+    result = parseString parseMaps mempty raw
+    real = run' result
+
+  -- print result
+  -- print real
+  print $ minimum real
