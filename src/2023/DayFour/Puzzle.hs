@@ -118,7 +118,7 @@ partTwo = do
   raw <- readFile location
 
   let
-    cards = parseString (many parseCard) mempty test
+    cards = parseString (many parseCard) mempty raw
     round = playGame True <$> cards
 
   print round
