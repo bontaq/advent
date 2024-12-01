@@ -6,12 +6,15 @@ module Main where
 -- import DayFive.Puzzle (partTwo)
 -- import DaySix.Puzzle (partOne)
 
-import DayEight.Puzzle (partTwo)
+-- import DayEight.Puzzle (partTwo)
+
+import DayOne.Puzzle
 
 main :: IO ()
 main = do
+  partOne
   putStrLn "hello"
-  partTwo
+  -- partTwo
   -- DayNine.partTwo
   -- DayTwo.partTwo
   -- res <- DaySeven.partTwo
