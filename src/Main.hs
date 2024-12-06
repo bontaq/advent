@@ -8,11 +8,10 @@ module Main where
 
 -- import DayEight.Puzzle (partTwo)
 
-import DayOne.Puzzle
+import DayThree.Puzzle
 
 main :: IO ()
 main = do
-  partOne
   putStrLn "hello"
   -- partTwo
   -- DayNine.partTwo
